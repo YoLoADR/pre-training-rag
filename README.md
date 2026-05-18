@@ -1,0 +1,128 @@
+# HomeButler AI
+
+> Votre conciergerie domestique intelligente — projet fil rouge de la formation RAFT (RAG & Fine-Tuning).
+
+## Présentation
+
+HomeButler AI est un assistant conversationnel qui aide les occupants d'un logement à :
+
+- **Répondre à leurs questions documentaires** (bail, règlement de copropriété, notices d'équipements, DPE)
+- **Analyser leurs consommations énergétiques** et détecter les anomalies
+- **Commander des produits locaux** auprès de producteurs et artisans à proximité
+- **Orchestrer plusieurs sources** via un agent ReAct intelligent
+
+## Architecture
+
+```
+UI Streamlit / Gradio
+        ↓ HTTP
+API FastAPI (/chat, /consumption, /products, /order)
+        ↓
+Agent ReAct (LangChain)
+    ├── RAG (FAISS + ChromaDB)
+    ├── Service énergie (pandas)
+    ├── Marketplace (JSON catalogue)
+    └── Météo (Open-Meteo)
+        ↓
+LLM : Claude API (dev) ou Ollama (prod)
+```
+
+## Prérequis
+
+- Python 3.11+
+- `python -m venv .venv && source .venv/bin/activate`
+- Clé API Anthropic (pour le mode dev local)
+- Ollama sur VPS (pour le mode production)
+
+## Installation
+
+```bash
+# 1. Environnement virtuel
+python -m venv .venv
+source .venv/bin/activate  # Windows : .venv\Scripts\activate
+
+# 2. Dépendances
+pip install -r requirements.txt
+
+# 3. Configuration
+cp .env.example .env
+# Éditer .env : ajouter ANTHROPIC_API_KEY au minimum
+
+# 4. Pré-charger le modèle d'embeddings (~470 Mo, une seule fois)
+python scripts/preload_models.py
+
+# 5. Générer les données fictives
+python scripts/generate_documents.py
+python scripts/generate_energy_data.py
+python scripts/generate_producers.py
+python scripts/generate_qa_dataset.py
+
+# 6. Indexer les documents RAG
+python -c "
+from homebutler.rag.ingestion import ingest_all_documents
+from homebutler.rag.vectorstore import build_faiss_index, build_chroma_db
+docs = ingest_all_documents()
+print(f'{len(docs)} chunks générés')
+build_faiss_index(docs, force_rebuild=True)
+build_chroma_db(docs)
+print('Indexation terminée')
+"
+```
+
+## Lancement (3 terminaux)
+
+```bash
+# Terminal 1 — API backend
+uvicorn api.main:app --reload --port 8000
+
+# Terminal 2 — Prototype Gradio (démo rapide)
+python ui/gradio_prototype.py
+
+# Terminal 3 — UI Streamlit complète
+streamlit run ui/app.py
+```
+
+## Structure du projet
+
+```
+homebutler/          # Package principal
+├── config.py        # Variables d'environnement
+├── llm/             # Abstraction LLM (Anthropic / Ollama)
+├── rag/             # Pipeline RAG (ingestion, vectorstore, retriever)
+├── agent/           # Agent ReAct + 4 outils
+└── services/        # Services métier (énergie, marketplace, météo)
+
+api/                 # FastAPI backend
+ui/                  # Interfaces (Gradio prototype + Streamlit)
+scripts/             # Génération des données fictives
+notebooks/           # Notebooks pédagogiques
+data/                # Données générées (gitignore les fichiers binaires)
+```
+
+## Variables d'environnement clés
+
+| Variable | Valeur | Description |
+|---|---|---|
+| `LLM_PROVIDER` | `anthropic` / `ollama` | Switch LLM |
+| `ANTHROPIC_API_KEY` | `sk-ant-...` | Clé API Claude |
+| `OLLAMA_HOST` | `http://...` | URL Ollama (VPS) |
+| `LANGCHAIN_TRACING_V2` | `true` / `false` | Activer LangSmith |
+| `TRACING_PROVIDER` | `langsmith` / `langfuse` | Choix de l'outil de tracing |
+
+## Déploiement VPS (Docker Compose)
+
+```bash
+ssh user@mon-vps
+git clone https://github.com/YoLoADR/pre-training-rag
+cd pre-training-rag
+cp .env.example .env  # éditer avec les vraies clés
+docker compose up -d
+```
+
+## Formation RAFT — couverture programme
+
+| Jour | Sprints couverts |
+|---|---|
+| J1 | LLM baseline, ingestion PDF, chunking, FAISS/ChromaDB, RAG simple |
+| J2 | Agent ReAct, LangChain/LlamaIndex/Haystack, fine-tuning QLoRA (Colab) |
+| J3 | Quantization, Ollama, FastAPI, Streamlit, LangSmith, pipeline hybride |

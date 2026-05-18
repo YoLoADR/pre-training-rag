@@ -1,0 +1,51 @@
+# Environment
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Data générée (conserver la structure, pas les fichiers)
+data/documents/*.pdf
+data/energy/*.csv
+data/marketplace/*.json
+data/qa_dataset/*.jsonl
+data/chroma_db/
+data/faiss_index/
+data/orders.json
+
+# HuggingFace cache
+.cache/
+*.safetensors
+*.bin
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# MLFlow
+mlruns/
+mlartifacts/
+
+# Test
+.pytest_cache/
+htmlcov/
+.coverage
