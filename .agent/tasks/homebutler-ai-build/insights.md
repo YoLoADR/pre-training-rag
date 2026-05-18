@@ -49,6 +49,34 @@
 - `@st.cache_resource` obligatoire sur agent et vectorstores (Streamlit recharge à chaque interaction)
 - Gradio 5.x a une API légèrement différente de Gradio 4.x pour `ChatInterface`
 
+## Problèmes rencontrés et solutions
+
+### fpdf2 + caractères non-latin-1
+**Problème** : fpdf2 avec les polices Helvetica intégrées ne supporte pas Unicode > latin-1.
+Les caractères `—` (tiret em, U+2014) et `→` (flèche droite, U+2192) provoquent `UnicodeEncodeError`.
+**Solution** : Remplacer `—` par `-` et `→` par `->` via sed avant génération.
+**Alternative future** : Utiliser une police TTF (DejaVu, Liberation) avec `pdf.add_font()`.
+
+### Python 3.14 sur machine formateur
+La machine tourne Python 3.14.3 (pas 3.11 comme spécifié). Les dépendances testées fonctionnent.
+Attention : certains packages (bitsandbytes, faiss-cpu wheel) peuvent ne pas avoir de wheels Python 3.14.
+
+### Données énergie
+- 365 lignes CSV générées avec succès
+- 32 anomalies détectées (z-score > 2.0 sur fenêtre 30j) pour 3 anomalies injectées — normal car la fenêtre glissante "voit" plusieurs jours autour du pic
+
+### Marketplace
+- 30 producteurs avec coordonnées GPS réalistes autour de Boulogne-Billancourt
+- Recherche haversine fonctionnelle : 7 producteurs légumes dans 15km
+
+## Étapes restantes (à faire par l'utilisateur)
+
+1. Mettre `ANTHROPIC_API_KEY` dans `.env`
+2. `pip install -r requirements.txt` complet (attention aux wheels Python 3.14)
+3. `python scripts/preload_models.py` — télécharge `paraphrase-multilingual-MiniLM-L12-v2`
+4. Indexation RAG initiale
+5. Test end-to-end : uvicorn + streamlit
+
 ---
 
-*Dernière mise à jour : Phase 0 — Bootstrap*
+*Dernière mise à jour : Implémentation complète — commit 6efc690 pushé sur GitHub*
