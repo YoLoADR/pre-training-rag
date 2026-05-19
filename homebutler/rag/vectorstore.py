@@ -7,21 +7,17 @@ Gestion des bases vectorielles :
 import os
 from langchain_community.vectorstores import FAISS
 from langchain_community.vectorstores import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import FastEmbedEmbeddings
 from langchain_core.documents import Document
 from homebutler import config
 
-# Modèle d'embeddings multilingue — tourne en CPU
+# Modèle d'embeddings multilingue — ONNX quantisé via fastembed (pas de torch requis)
 EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
 
-def get_embeddings() -> HuggingFaceEmbeddings:
-    """Retourne le modèle d'embeddings (mis en cache par HuggingFace)."""
-    return HuggingFaceEmbeddings(
-        model_name=EMBEDDING_MODEL,
-        model_kwargs={"device": "cpu"},
-        encode_kwargs={"normalize_embeddings": True},
-    )
+def get_embeddings() -> FastEmbedEmbeddings:
+    """Retourne le modèle d'embeddings (mis en cache dans ~/.cache/fastembed/)."""
+    return FastEmbedEmbeddings(model_name=EMBEDDING_MODEL)
 
 
 # ── FAISS ─────────────────────────────────────────────────────────────────────

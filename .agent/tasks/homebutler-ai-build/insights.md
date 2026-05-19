@@ -57,12 +57,20 @@ Les caractères `—` (tiret em, U+2014) et `→` (flèche droite, U+2192) provo
 **Solution** : Remplacer `—` par `-` et `→` par `->` via sed avant génération.
 **Alternative future** : Utiliser une police TTF (DejaVu, Liberation) avec `pdf.add_font()`.
 
-### Python 3.14 → utiliser Python 3.13 pour ce projet
-La machine a Python 3.14.3, 3.13.5 et 3.12.13 installés.
-**Python 3.14 est incompatible** avec `sentence-transformers` et `torch` : aucun wheel pip disponible (confirmé mai 2026).
-**Solution : recréer le venv avec Python 3.13** (`python3.13 -m venv .venv`).
-Sentence-transformers supporte officiellement jusqu'à Python 3.13 (même en v5.5.0).
-faiss-cpu : version 1.13.2 requise (1.8.0 n'a pas de wheel Python 3.13/3.14).
+### Embeddings : sentence-transformers remplacé par fastembed (Python 3.14)
+**Contexte machine** : Python 3.14.3 installé (+ 3.13.5 et 3.12.13 disponibles).
+**Erreurs rencontrées lors du pip install** :
+1. `faiss-cpu==1.8.0` → pas de wheel Python 3.14 → corrigé en `1.13.2`
+2. `pydantic==2.7.1` → conflit avec `langchain 0.3.14` qui exige `>=2.7.4` → assoupli en `>=2.7.4`
+3. `numpy==1.26.4` et `pandas==2.2.3` → pas de wheel Python 3.14 → assoupli en `>=2.0.0` / `>=2.2.3`
+4. `sentence-transformers==3.3.1` → exige `torch>=1.11.0` → `torch` n'a pas de wheel pip standard Python 3.14 → **remplacé par `fastembed>=0.8.0`**
+
+**Solution retenue : fastembed (sans torch)**
+- `fastembed` utilise ONNX Runtime, pas PyTorch → compatible Python 3.14 depuis v0.8.0 (onnxruntime 1.26.0, mai 2026)
+- Même modèle : `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (version ONNX quantisée ~100 Mo vs 470 Mo PyTorch)
+- LangChain : `FastEmbedEmbeddings` dans `langchain-community` (même API que `HuggingFaceEmbeddings`)
+- Cache dans `~/.cache/fastembed/` au lieu de `~/.cache/huggingface/`
+- Fichiers modifiés : `requirements.txt`, `homebutler/rag/vectorstore.py`, `scripts/preload_models.py`
 
 ### Données énergie
 - 365 lignes CSV générées avec succès
@@ -72,14 +80,30 @@ faiss-cpu : version 1.13.2 requise (1.8.0 n'a pas de wheel Python 3.13/3.14).
 - 30 producteurs avec coordonnées GPS réalistes autour de Boulogne-Billancourt
 - Recherche haversine fonctionnelle : 7 producteurs légumes dans 15km
 
-## Étapes restantes (à faire par l'utilisateur)
+## État actuel (2026-05-19)
 
-1. Mettre `ANTHROPIC_API_KEY` dans `.env`
-2. `pip install -r requirements.txt` complet (attention aux wheels Python 3.14)
-3. `python scripts/preload_models.py` — télécharge `paraphrase-multilingual-MiniLM-L12-v2`
-4. Indexation RAG initiale
-5. Test end-to-end : uvicorn + streamlit
+### Ce qui est fait ✅
+- Code complet (40 fichiers), notebooks valides, données générées
+- `.env` configuré : ANTHROPIC_API_KEY réelle, Langfuse cloud (`cloud.langfuse.com`)
+- `requirements.txt` corrigé pour Python 3.14 : faiss-cpu 1.13.2, pydantic>=2.7.4, fastembed>=0.8.0
+- `.venv` existe (Python 3.14.3)
+
+### Blocage en cours ⚠️
+- `pip install -r requirements.txt` pas encore terminé avec succès sur Python 3.14
+- Le remplacement sentence-transformers → fastembed vient d'être fait (commit à venir)
+- Index FAISS et ChromaDB pas encore buildés
+- Aucun test end-to-end effectué
+
+### Prochaines étapes (dans l'ordre)
+1. `pip install -r requirements.txt` (relancer après le dernier commit)
+2. `python scripts/preload_models.py` — télécharge le modèle ONNX (~100 Mo)
+3. Indexation RAG (`ingest_all_documents` + `build_faiss_index` + `build_chroma_db`)
+4. Scénario 2 → services métier
+5. Scénario 4 → retrieval
+6. Scénario 5 → agent ReAct (nécessite ANTHROPIC_API_KEY dans env)
+7. Scénario 6 → API FastAPI + tests sécurité
+8. Scénario 7 → UI Streamlit + Gradio
 
 ---
 
-*Dernière mise à jour : Implémentation complète — commit 6efc690 pushé sur GitHub*
+*Dernière mise à jour : 2026-05-19 — fastembed substitution + corrections Python 3.14*

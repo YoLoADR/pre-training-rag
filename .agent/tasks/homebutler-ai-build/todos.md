@@ -83,10 +83,25 @@
 - [x] Commit final + push (commit: 6efc690)
 - [x] Données générées validées
 
-## Prochaines étapes (pour l'utilisateur)
+## Corrections Python 3.14 (faites le 2026-05-19) ✅
 
-- [ ] Ajouter `ANTHROPIC_API_KEY` dans `.env`
-- [ ] `pip install -r requirements.txt` (complet — attention Python 3.14 vs 3.11)
-- [ ] `python scripts/preload_models.py` (télécharger le modèle embeddings ~470Mo)
-- [ ] Indexation RAG : `python -c "from homebutler.rag.ingestion import ingest_all_documents; ..."`
-- [ ] Tester l'API : `uvicorn api.main:app --reload --port 8000`
+- [x] `faiss-cpu==1.8.0` → `1.13.2` (pas de wheel Python 3.14 en 1.8.0)
+- [x] `pydantic==2.7.1` → `>=2.7.4` (conflit langchain 0.3.14)
+- [x] `numpy==1.26.4` → `>=2.0.0` (pas de wheel Python 3.14)
+- [x] `pandas==2.2.3` → `>=2.2.3` (même raison)
+- [x] `sentence-transformers==3.3.1` → `fastembed>=0.8.0` (torch absent Python 3.14, fastembed utilise ONNX)
+- [x] `homebutler/rag/vectorstore.py` : `HuggingFaceEmbeddings` → `FastEmbedEmbeddings`
+- [x] `scripts/preload_models.py` : réécrit avec `fastembed.TextEmbedding`
+- [x] `.env` : ANTHROPIC_API_KEY réelle, Langfuse cloud configuré
+- [x] `notebooks/02_ingestion_vectorisation.ipynb` : JSON invalide réparé
+
+## Vérification end-to-end (à faire)
+
+- [ ] **S0** : `pip install -r requirements.txt` (relancer — doit passer entièrement)
+- [ ] **S1** : `python -c "from homebutler.config import config; print(config.LLM_PROVIDER)"`
+- [ ] **S2** : test services (energy + marketplace + weather)
+- [ ] **S3** : `python scripts/preload_models.py` + indexation FAISS + ChromaDB
+- [ ] **S4** : test retrieval EnsembleRetriever
+- [ ] **S5** : test agent ReAct question simple + question multi-outils
+- [ ] **S6** : `uvicorn api.main:app --reload` + curl 4 endpoints + test injection
+- [ ] **S7** : `streamlit run ui/app.py` + 4 pages + gradio prototype
