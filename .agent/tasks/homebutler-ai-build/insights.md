@@ -57,9 +57,12 @@ Les caractères `—` (tiret em, U+2014) et `→` (flèche droite, U+2192) provo
 **Solution** : Remplacer `—` par `-` et `→` par `->` via sed avant génération.
 **Alternative future** : Utiliser une police TTF (DejaVu, Liberation) avec `pdf.add_font()`.
 
-### Python 3.14 sur machine formateur
-La machine tourne Python 3.14.3 (pas 3.11 comme spécifié). Les dépendances testées fonctionnent.
-Attention : certains packages (bitsandbytes, faiss-cpu wheel) peuvent ne pas avoir de wheels Python 3.14.
+### Python 3.14 → utiliser Python 3.13 pour ce projet
+La machine a Python 3.14.3, 3.13.5 et 3.12.13 installés.
+**Python 3.14 est incompatible** avec `sentence-transformers` et `torch` : aucun wheel pip disponible (confirmé mai 2026).
+**Solution : recréer le venv avec Python 3.13** (`python3.13 -m venv .venv`).
+Sentence-transformers supporte officiellement jusqu'à Python 3.13 (même en v5.5.0).
+faiss-cpu : version 1.13.2 requise (1.8.0 n'a pas de wheel Python 3.13/3.14).
 
 ### Données énergie
 - 365 lignes CSV générées avec succès
