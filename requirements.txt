@@ -16,7 +16,7 @@ ollama==0.4.4
 
 # ── Embeddings & Vector stores ────────────────────────────────────────────────
 sentence-transformers==3.3.1
-faiss-cpu==1.8.0
+faiss-cpu==1.13.2
 chromadb==0.5.23
 
 # ── Document processing ───────────────────────────────────────────────────────
