@@ -1,3 +1,76 @@
+📝 Slide 1 : Programme de la formation — 3 jours pour maîtriser RAG et Fine Tuning
+
+POURQUOI avoir une vue d'ensemble avant de plonger dans les détails ?
+
+Une formation dense de 3 jours sur des technologies qui évoluent vite peut rapidement perdre le fil. Ce slide est la carte du voyage : à chaque instant, vous saurez où vous en êtes et pourquoi l'étape du moment est nécessaire pour celle qui suit. Chaque chapitre construit une couche du projet fil rouge HomeButler AI.
+
+| Jour | Chapitre | Titre | Ce que vous saurez faire |
+|------|----------|-------|--------------------------|
+| 1 | 1 | Introduction aux LLM et concepts RAG | Situer LLM, RAG et Fine Tuning dans l'écosystème IA |
+| 1 | 2 | Création d'un RAG simple avec Python | Indexer des PDFs, interroger un vectorstore, évaluer la qualité |
+| 2 | 3 | Intégration dans un pipeline RAG | Assembler un agent ReAct multi-outils avec LangChain |
+| 2 | 4 | Fine-tuning avec HuggingFace | Préparer un dataset LoRA/QLoRA, lancer un entraînement |
+| 3 | 5 | Déploiement, optimisation et supervision | Quantiser, exposer via FastAPI, monitorer en production |
+| 3 | 6 | Fine Tuning vs RAG | Choisir la bonne architecture avec un arbre de décision |
+
+Fil rouge **HomeButler AI** : à la fin du Jour 3, vous aurez construit une application de conciergerie domestique intelligente — agent ReAct, pipeline RAG, API FastAPI, interface Streamlit, déployée sur VPS avec Docker Compose.
+
+> 💡 60 % du temps est consacré aux travaux pratiques. La théorie sert à comprendre pourquoi les choix techniques sont faits — pas à mémoriser des formules.
+
+
+📝 Slide 2 : Historique — de l'attention aux systèmes hybrides (2017-2026)
+
+POURQUOI retracer l'histoire avant de coder ?
+
+Les technologies RAG et Fine Tuning ne sont pas apparues de nulle part. Chacune répond à une limite concrète de la précédente génération. Comprendre la généalogie permet de comprendre les contraintes actuelles — et d'anticiper les prochaines ruptures.
+
+| Année | Événement | Limite résolue | Nouvelle limite créée |
+|-------|-----------|----------------|----------------------|
+| 2017 | Transformer — "Attention Is All You Need" (Vaswani et al.) | RNN lent et séquentiel | Coût quadratique de l'attention |
+| 2018 | BERT + GPT-1 | Pas de pré-entraînement généraliste | Fine-tuning complet très coûteux |
+| 2020 | GPT-3 (175B) — few-shot sans réentraînement | Besoin de fine-tuner pour chaque tâche | Knowledge cutoff, hallucinations |
+| 2020 | RAG — Lewis et al., Meta AI (arxiv:2005.11401) | Connaissance figée dans les poids | Latence de retrieval |
+| 2022 mars | InstructGPT (RLHF) — 1,3B > 175B en qualité humaine | LLM difficile à aligner sur les intentions | Alignement coûteux en annotations |
+| 2022 nov | ChatGPT — 100 M utilisateurs en 2 mois | IA de langage réservée aux experts | Attentes irréalistes sur les capacités |
+| 2021 | LoRA (Hu et al., arxiv:2106.09685) | Fine-tuning complet = 140 GB GPU | Rank à tuner, qualité légèrement réduite |
+| 2023 | QLoRA (Dettmers et al., arxiv:2305.14314) | LoRA nécessite encore GPU A100 | Complexité de la quantification 4-bit |
+| 2023 | LLaMA (Meta) + Mistral (Paris) | LLM open-source de qualité insuffisante | Infrastructure GPU pour self-hosting |
+| 2024 | RAFT (Zhang et al., arxiv:2403.10131) | RAG et FT combinés naïvement = fragilité au bruit | Complexité d'entraînement sur oracle + distracteurs |
+
+> 💡 Chaque technologie de ce cours est la réponse directe à une limite documentée. Quand vous rencontrez une contrainte en projet, c'est probablement déjà dans cette timeline — et la solution aussi.
+
+
+📝 Slide 3 : Comparatifs et tendances 2026 — où en est l'écosystème ?
+
+POURQUOI s'intéresser aux tendances avant de commencer ?
+
+L'écosystème LLM évolue tous les 3 à 6 mois. Les outils que vous apprenez aujourd'hui seront les fondations — mais certains choix techniques de 2023 sont déjà obsolètes. Ce slide positionne les décisions du cours dans le contexte actuel et donne des repères pour anticiper les prochains changements.
+
+**Comparatif modèles open-source vs fermés (mai 2026)**
+
+| Modèle | Type | Paramètres | Points forts | Usage recommandé |
+|--------|------|-----------|-------------|-----------------|
+| GPT-4o (OpenAI) | Fermé | Non divulgué | Multimodal, SOTA général | Production cloud, budget disponible |
+| Claude Sonnet 4 (Anthropic) | Fermé | Non divulgué | Raisonnement, code, sécurité | Production cloud, conformité |
+| Llama 3.1 70B (Meta) | Open-source | 70B | Qualité proche GPT-4, Apache 2.0 | Self-hosting GPU |
+| Mistral Large (Mistral AI) | Fermé/Open | 123B | Excellent français, efficace | Projets francophones |
+| Mistral 7B / Mixtral 8×7B | Open-source | 7B / 47B | Léger, rapide, Apache 2.0 | CPU/GPU modeste, fine-tuning |
+| Gemma 2 (Google) | Open-source | 9B / 27B | Efficace, licence permissive | Recherche, éducation |
+
+**Tendances 2026 à connaître**
+
+| Tendance | Ce qui change | Impact pour ce cours |
+|----------|--------------|----------------------|
+| RAG multi-modal | Images + texte dans le même index | Nos principes de chunking s'appliquent aux deux |
+| Agents autonomes long-horizon | Boucles multi-étapes sans intervention humaine | Pattern ReAct reste la base — on l'étend |
+| LLM sur device (smartphones) | Modèles < 3B quantisés en 4-bit | QLoRA et GGUF deviennent encore plus stratégiques |
+| Coûts d'inférence divisés par 10 en 3 ans | GPT-4 coûtait 100× plus cher en 2023 | L'arbitrage cloud vs local se rééquilibre |
+| Réglementation IA (EU AI Act) | Obligations de traçabilité et d'explicabilité | LangSmith/Langfuse deviennent des outils de conformité |
+
+⚠️ **Point de vigilance** — Les benchmarks publics (MMLU, HumanEval) mesurent des capacités générales. Votre cas d'usage métier peut donner des classements très différents. Toujours évaluer sur vos propres données avant de choisir un modèle.
+
+---
+
 Chapitre 1 : Introduction aux LLM et concepts RAG — Jour 1
 
 
