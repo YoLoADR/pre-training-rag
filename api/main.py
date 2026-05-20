@@ -10,13 +10,10 @@ from fastapi import FastAPI, Request, HTTPException, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import APIKeyHeader
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from homebutler import config
-
-# ── Rate Limiter (J3 sécurité — "risques exposition") ────────────────────────
-limiter = Limiter(key_func=get_remote_address)
+from api.limiter import limiter
 
 # ── Patterns de détection prompt injection ────────────────────────────────────
 # 19 patterns couvrant FR + EN (J3 atelier sécurité)
@@ -114,11 +111,6 @@ async def prompt_injection_filter(request: Request, call_next):
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 from api.routers import chat, consumption, products, orders, rag  # noqa: E402
-
-# Rate limiting sur /chat (30 req/min par IP — J3 sécurité)
-@app.middleware("http")
-async def rate_limit_chat(request: Request, call_next):
-    return await call_next(request)
 
 app.include_router(chat.router)
 app.include_router(consumption.router)

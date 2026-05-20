@@ -12,6 +12,7 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+from api.limiter import limiter
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -136,7 +137,8 @@ async def _call_agent(message: str, session_id: str, debug: bool = False) -> dic
 # ── POST /chat ────────────────────────────────────────────────────────────────
 
 @router.post("", response_model=ChatResponse)
-async def chat(req: ChatRequest):
+@limiter.limit("30/minute")
+async def chat(request: Request, req: ChatRequest):
     """
     Endpoint principal. Modes :
     - agent    : ReAct avec 4 outils + mémoire session (défaut)
