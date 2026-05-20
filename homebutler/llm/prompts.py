@@ -1,4 +1,4 @@
-from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, PromptTemplate, MessagesPlaceholder
 
 # ── Prompt système conciergerie ───────────────────────────────────────────────
 CONCIERGE_SYSTEM_PROMPT = """Tu es HomeButler, la conciergerie domestique intelligente et bienveillante.
@@ -76,3 +76,10 @@ Commence !
 
 Question : {input}
 Réflexion : {agent_scratchpad}"""
+
+# ── LLM seul, sans contexte documentaire (mode llm_only) ─────────────────────
+# Intentionnellement sans injection RAG — démontre les hallucinations (J1 matin).
+BARE_LLM_TEMPLATE = ChatPromptTemplate.from_messages([
+    ("system", CONCIERGE_SYSTEM_PROMPT),
+    ("human", "{question}"),
+])

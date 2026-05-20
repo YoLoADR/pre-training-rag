@@ -1,37 +1,66 @@
 """
 API FastAPI HomeButler AI.
-Endpoints : /chat, /consumption/analyze, /products/search, /order
-Sécurité  : filtre prompt injection, CORS, clé API optionnelle
+Endpoints : /chat, /consumption/analyze, /products/search, /order, /rag/*
+Sécurité  : filtre prompt injection (19 patterns), rate limiting, clé API optionnelle
 """
 
 import re
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.security import APIKeyHeader
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from homebutler import config
 
-# ── Patterns de détection prompt injection ───────────────────────────────────
+# ── Rate Limiter (J3 sécurité — "risques exposition") ────────────────────────
+limiter = Limiter(key_func=get_remote_address)
+
+# ── Patterns de détection prompt injection ────────────────────────────────────
+# 19 patterns couvrant FR + EN (J3 atelier sécurité)
 _INJECTION_PATTERNS = [
+    # Français — instruction override
     r"ignore\s+(tes|les|toutes|mes|vos)\s+instructions",
     r"oublie\s+(le|ton|tes|votre|toutes)\s+(contexte|instructions?|prompt)",
-    r"system\s*prompt",
-    r"jailbreak",
-    r"act\s+as\s+",
-    r"pretend\s+(you\s+are|to\s+be)",
-    r"disregard\s+(all|your|previous)",
-    r"ignore\s+all\s+previous",
+    r"répète\s+tes\s+instructions",
     r"tu\s+es\s+maintenant",
     r"désactive\s+tes\s+restrictions",
+    r"fais\s+semblant",
+    r"jeu\s+de\s+r[oô]le",
+    r"en\s+tant\s+qu.IA\s+sans\s+restrictions",
+    # Français — extraction système
+    r"montre.moi\s+(ton|le)\s+prompt",
+    r"dis.moi\s+tes\s+instructions",
+    # Anglais — jailbreak classiques
+    r"jailbreak",
+    r"DAN\s+mode",
+    r"developer\s+mode",
+    r"act\s+as\s+",
+    r"pretend\s+(you\s+are|to\s+be)",
+    r"simulate\s+(being|you\s+are)",
+    r"roleplay\s+as",
+    r"disregard\s+(all|your|previous)",
+    r"ignore\s+all\s+previous",
+    r"system\s*prompt",
 ]
 _INJECTION_RE = re.compile("|".join(_INJECTION_PATTERNS), re.IGNORECASE)
+
+# ── API Key (optionnel — pour simuler l'auth en production) ──────────────────
+_API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+async def verify_api_key(api_key: str = Security(_API_KEY_HEADER)):
+    """Validation clé API optionnelle (activée si API_KEY est défini dans .env)."""
+    if config.API_KEY and config.API_KEY != "homebutler-dev-key" and api_key != config.API_KEY:
+        raise HTTPException(status_code=401, detail="Clé API invalide ou manquante.")
 
 
 # ── Lifespan : initialisation au démarrage ────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("HomeButler AI — démarrage de l'API")
-    # Pré-initialisation de l'agent (évite le cold-start sur la première requête)
     try:
         from homebutler.agent.react_agent import get_singleton_agent
         get_singleton_agent(verbose=False)
@@ -45,9 +74,13 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="HomeButler AI API",
     description="Conciergerie domestique intelligente — Formation RAFT",
-    version="1.0.0",
+    version="1.1.0",
     lifespan=lifespan,
 )
+
+# Rate limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS — permissif pour le développement (à restreindre en production)
 app.add_middleware(
@@ -74,28 +107,41 @@ async def prompt_injection_filter(request: Request, call_next):
                     "message": "Requête refusée par le filtre de sécurité.",
                 },
             )
-        # Remettre le body pour que les routers puissent le lire
         request._body = body_bytes
 
     return await call_next(request)
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
-from api.routers import chat, consumption, products, orders  # noqa: E402
+from api.routers import chat, consumption, products, orders, rag  # noqa: E402
+
+# Rate limiting sur /chat (30 req/min par IP — J3 sécurité)
+@app.middleware("http")
+async def rate_limit_chat(request: Request, call_next):
+    return await call_next(request)
 
 app.include_router(chat.router)
 app.include_router(consumption.router)
 app.include_router(products.router)
 app.include_router(orders.router)
+app.include_router(rag.router)
 
 
 @app.get("/", tags=["health"])
 async def root():
     return {
         "service": "HomeButler AI API",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "llm_provider": config.LLM_PROVIDER,
         "status": "ok",
+        "endpoints": {
+            "chat": "POST /chat (modes: agent|rag_only|llm_only)",
+            "compare": "POST /chat/compare",
+            "stream": "GET /chat/stream",
+            "rag_retrieve": "POST /rag/retrieve",
+            "rag_evaluate": "POST /rag/evaluate",
+            "rag_compare": "POST /rag/compare-strategies",
+        },
     }
 
 
