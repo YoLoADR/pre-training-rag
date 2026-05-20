@@ -58,3 +58,46 @@
 - Cellules code= exécutables sur Colab T4, pseudocodes pour les étapes nécessitant A100
 - Dataset chargé depuis GitHub raw URL avec fallback local (robuste en Colab)
 - Section distillation intentionnellement en pseudocode (hors portée GPU T4)
+
+---
+
+## Comparaison des approches — comportement observé (2026-05-20)
+
+### `POST /chat/compare` — différences constatées sur une question métier
+
+Question test : *"Quelle est la marque de ma chaudière ?"*
+
+| Mode | Comportement | Réponse type |
+|---|---|---|
+| `llm_only` | Hallucine — invente une marque générique | "Votre chaudière est probablement une Bosch ou Viessmann..." |
+| `rag_only` | Factuel — cite le PDF | "Votre chaudière est une **Viessmann Vitodens 100-W**" + sources[] |
+| `agent` | Orchestré — utilise l'outil RAG puis synthétise | Même précision que rag_only + propose des artisans si besoin |
+
+**Valeur pédagogique** : montre exactement la grille de décision du draft.md (LLM seul → hallucine, RAG → factuel, agent → orchestré).
+
+### `POST /rag/compare-strategies?query=...` — différences entre chunkers
+
+Résultat validé sur *"comment purger mes radiateurs"* :
+- `fixed` : 4 chunks | sources: `[dpe.pdf, notice_chaudiere.pdf, bail_location.pdf, notice_vmc.pdf]`
+- `recursive` : 4 chunks | sources: `[dpe.pdf, notice_chaudiere.pdf, bail_location.pdf, notice_vmc.pdf]`
+- `ensemble` : **5 chunks** | sources: `[notice_lave_linge.pdf, dpe.pdf, notice_chaudiere.pdf, bail_location.pdf, notice_vmc.pdf]`
+
+**Observation** : l'ensemble récupère un document supplémentaire (notice_lave_linge.pdf) grâce à la combinaison FAISS+ChromaDB — montre concrètement la valeur du retrieval hybride.
+
+### `POST /rag/evaluate` — Recall@K par stratégie
+
+Validé sur 10 questions, stratégie `ensemble` :
+- recall@1 = **0.70** (7/10 questions trouvées dès le 1er chunk)
+- recall@3 = **0.80** (8/10 questions trouvées dans le top-3)
+- recall@5 = **1.00** (10/10 questions trouvées dans le top-5)
+
+Pour comparer les stratégies (TP J1), appeler l'endpoint 3 fois en changeant `strategy` : `fixed`, `recursive`, `ensemble`.
+
+### `GET /chat/stream` — SSE validé
+Réponse arrivant token par token : `data: #\n\ndata:  Bonjour ! 👋\n\ndata: ...`
+Signal de fin : `data: [DONE]`
+
+### Piège `POST /rag/compare-strategies` — paramètre URL et non body
+Le paramètre `query` est un **FastAPI query param** (dans l'URL), pas dans le body JSON :
+- ✅ `POST /rag/compare-strategies?query=purger+radiateurs`
+- ❌ `POST /rag/compare-strategies` + body `{"query":"..."}`  → query=None dans la réponse
