@@ -107,3 +107,68 @@ Les caractères `—` (tiret em, U+2014) et `→` (flèche droite, U+2192) provo
 ---
 
 *Dernière mise à jour : 2026-05-19 — fastembed substitution + corrections Python 3.14*
+
+---
+
+## Session 2026-05-19 (suite) — Setup end-to-end validé sur Mac Intel
+
+### Découverte majeure : Python 3.14 incompatible avec Mac Intel
+
+Le commit `2031115` ("replace sentence-transformers with fastembed for Python 3.14 support") était **incomplet** sur Mac Intel. Le vrai blocker n'est ni torch ni sentence-transformers, mais **onnxruntime** (dépendance de chromadb ET fastembed).
+
+**Cartographie onnxruntime / OS / Python (mai 2026)** :
+
+| onnxruntime | macOS x86_64 (Intel) | Py 3.13 | Py 3.14 |
+|---|---|---|---|
+| 1.26.0 (latest) | ❌ ARM only | ✅ | ✅ |
+| 1.24–1.25 | ❌ ARM only | ✅ | ✅ |
+| **1.23.x** | **✅ Intel + ARM** | **✅** | ❌ |
+| < 1.23 | ❌ | parfois ✅ | ❌ |
+
+Microsoft a migré sa cible macOS d'Intel vers ARM exactement à partir de la version qui ajoute le support Python 3.14. **Aucune combinaison Python 3.14 + Mac Intel n'est possible** sans compiler onnxruntime depuis les sources.
+
+**Solution retenue** : Python **3.13.5** + pin `onnxruntime==1.23.2`. Compatible fastembed (qui exige `>1.21.0, !=1.24.0/1, !=1.20.0` sur Py 3.13).
+
+### Bugs supplémentaires découverts pendant la validation
+
+1. **`python-multipart==0.0.12` incompatible gradio 5.9.1** (exige `>=0.0.18`).
+   → bumpé en `python-multipart>=0.0.18`.
+
+2. **`ModuleNotFoundError: No module named 'homebutler'` dans Streamlit**.
+   - Cause : Streamlit ne place que le dossier du script (`ui/`) dans `sys.path`, pas la racine projet.
+   - Solution propre retenue : créer `pyproject.toml` minimal + `pip install -e .` → le package `homebutler` devient résolvable peu importe le cwd.
+
+3. **`ValueError: 'lat' is not a column` sur la page Marketplace**.
+   - Cause : `api/routers/products.py::ProducerResult` n'exposait pas `latitude`/`longitude` alors que le service `search_producers` les renvoie.
+   - Solution : ajout des deux champs au modèle Pydantic + au mapping de retour.
+
+### Validation end-to-end réussie
+
+- ✅ `pip install -r requirements.txt` complet (onnxruntime 1.23.2, chromadb 0.5.23, fastembed 0.8.0, langchain 0.3.14, gradio 5.9.1).
+- ✅ Modèle d'embeddings préchargé (`paraphrase-multilingual-MiniLM-L12-v2`, 384 dim).
+- ✅ Données générées : 6 PDFs, 365j énergie, 30 producteurs, 150 paires Q/A.
+- ✅ Indexation : 49 chunks → FAISS + ChromaDB.
+- ✅ API FastAPI : `/health`, `/chat` (agent ReAct + RAG + Claude Sonnet 4.6), `/products/search`, `/consumption/analyze` tous testés OK.
+- ✅ UIs : Streamlit (8501) et Gradio (7860) démarrent.
+
+### Warnings non-bloquants à connaître
+
+- `LangChainDeprecationWarning: Chroma deprecated, use langchain-chroma` — cosmétique, l'API actuelle marche.
+- `Failed to send telemetry event` (chromadb) — bug telemetry de chromadb 0.5.23, sans impact fonctionnel.
+- `UserWarning: tuples format for chatbot messages is deprecated` (Gradio) — pré-v6 deprecation.
+- `LangSmithMissingAPIKeyWarning` — normal puisque `LANGCHAIN_TRACING_V2=false`.
+
+### Note pour le déploiement / formation
+
+- **Mac Intel** : doit utiliser Python 3.13 + onnxruntime 1.23.2 (cf. ce pin dans requirements.txt).
+- **Mac ARM (M1/M2/M3/M4)** : Python 3.13 ou 3.14 + onnxruntime latest fonctionnent.
+- **Linux x86_64** (VPS, Docker) : Python 3.13 ou 3.14 + onnxruntime latest fonctionnent. C'est l'env le plus récent.
+- **Pour formation cross-OS** : Docker reste la solution la plus propre pour garantir un env identique chez tous les stagiaires.
+
+### Fichiers ajoutés/modifiés cette session
+
+- `requirements.txt` : ajout `onnxruntime==1.23.2`, bump `python-multipart>=0.0.18`.
+- `pyproject.toml` (nouveau) : déclaration minimale du package `homebutler` pour `pip install -e .`.
+- `api/routers/products.py` : `latitude`/`longitude` ajoutés à `ProducerResult`.
+
+*Dernière mise à jour : 2026-05-19 (soir) — setup end-to-end validé sur Mac Intel + Python 3.13*

@@ -15,6 +15,10 @@ anthropic==0.40.0
 ollama==0.4.4
 
 # ── Embeddings & Vector stores ────────────────────────────────────────────────
+# onnxruntime: 1.23.2 = dernière version fournissant des wheels macOS x86_64
+# (à partir de 1.24 onnxruntime ne publie plus que macOS ARM). Pin requis pour
+# Mac Intel ; sur Linux/ARM les versions plus récentes seraient acceptables.
+onnxruntime==1.23.2
 fastembed>=0.8.0
 faiss-cpu==1.13.2
 chromadb==0.5.23
@@ -31,7 +35,7 @@ numpy>=2.0.0
 fastapi==0.115.6
 uvicorn[standard]==0.32.1
 httpx==0.27.2
-python-multipart==0.0.12
+python-multipart>=0.0.18
 
 # ── UI ────────────────────────────────────────────────────────────────────────
 streamlit==1.41.1

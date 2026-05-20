@@ -8,6 +8,7 @@ import re
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from homebutler import config
 
 # ── Patterns de détection prompt injection ───────────────────────────────────
@@ -66,9 +67,9 @@ async def prompt_injection_filter(request: Request, call_next):
         body_text = body_bytes.decode("utf-8", errors="ignore")
 
         if _INJECTION_RE.search(body_text):
-            raise HTTPException(
+            return JSONResponse(
                 status_code=400,
-                detail={
+                content={
                     "error": "security_filter",
                     "message": "Requête refusée par le filtre de sécurité.",
                 },

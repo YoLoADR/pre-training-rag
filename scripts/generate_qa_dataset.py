@@ -284,27 +284,30 @@ while len(ALL_PAIRS) < 150:
 ALL_PAIRS = ALL_PAIRS[:150]
 
 
+def _classify(inp: str) -> str:
+    inp = inp.lower()
+    if any(w in inp for w in ["chaudière", "vmc", "lave-linge", "bruit", "filtre", "radiateur", "purge"]):
+        return "équipements"
+    if any(w in inp for w in ["propriétaire", "bail", "loyer", "caution", "réparation", "animal", "locataire"]):
+        return "droits"
+    if any(w in inp for w in ["consommation", "facture", "énergie", "électricité", "chauffage", "dpe", "isolation", "kwh"]):
+        return "énergie"
+    if any(w in inp for w in ["producteur", "légumes", "pain", "fromage", "artisan", "marché", "miel", "viande"]):
+        return "marketplace"
+    return "autre"
+
+
 def generate():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
+    cats = {"équipements": 0, "droits": 0, "énergie": 0, "marketplace": 0, "autre": 0}
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         for pair in ALL_PAIRS:
-            f.write(json.dumps(pair, ensure_ascii=False) + "\n")
+            cat = _classify(pair["input"])
+            cats[cat] += 1
+            enriched = dict(pair, category=cat)
+            f.write(json.dumps(enriched, ensure_ascii=False) + "\n")
     print(f"  ✓ {OUTPUT_FILE}")
     print(f"     {len(ALL_PAIRS)} paires Q/R générées")
-    # Catégories
-    cats = {"équipements": 0, "droits": 0, "énergie": 0, "marketplace": 0, "autre": 0}
-    for p in ALL_PAIRS:
-        inp = p["input"].lower()
-        if any(w in inp for w in ["chaudière", "vmc", "lave-linge", "bruit", "filtre"]):
-            cats["équipements"] += 1
-        elif any(w in inp for w in ["propriétaire", "bail", "loyer", "caution", "réparation", "animal"]):
-            cats["droits"] += 1
-        elif any(w in inp for w in ["consommation", "facture", "énergie", "électricité", "chauffage", "dpe", "isolation"]):
-            cats["énergie"] += 1
-        elif any(w in inp for w in ["producteur", "légumes", "pain", "fromage", "artisan", "marché", "miel", "viande"]):
-            cats["marketplace"] += 1
-        else:
-            cats["autre"] += 1
     for cat, n in cats.items():
         print(f"     - {cat}: {n}")
 

@@ -69,6 +69,16 @@ def _find_local_products(query: str) -> str:
     try:
         from homebutler.services.marketplace import search_producers, format_producers_for_llm
         results = search_producers(query=query, max_distance_km=30, limit=5)
+        if not results:
+            # Fallback: try each word of the query individually
+            for word in query.lower().split():
+                if len(word) > 3:
+                    results = search_producers(query=word, max_distance_km=30, limit=5)
+                    if results:
+                        break
+        if not results:
+            # Last resort: return all producers within 30 km
+            results = search_producers(query="", max_distance_km=30, limit=5)
         return format_producers_for_llm(results)
     except FileNotFoundError:
         return (

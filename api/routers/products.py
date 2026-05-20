@@ -9,6 +9,8 @@ class ProducerResult(BaseModel):
     nom: str
     type: str
     produits: list[str]
+    latitude: float
+    longitude: float
     distance_calculee_km: float
     livraison: bool
     min_commande_eur: float
@@ -41,6 +43,8 @@ async def search_products(
                 nom=p["nom"],
                 type=p["type"],
                 produits=p["produits"],
+                latitude=p["latitude"],
+                longitude=p["longitude"],
                 distance_calculee_km=p["distance_calculee_km"],
                 livraison=p.get("livraison", False),
                 min_commande_eur=p.get("min_commande_eur", 0),

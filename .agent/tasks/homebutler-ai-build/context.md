@@ -42,3 +42,16 @@ https://github.com/YoLoADR/pre-training-rag
 ## Plan de référence
 
 `.agent/tasks/homebutler-ai-build/plan.md`
+
+---
+
+## État au 2026-05-19 (soir)
+
+**Setup local validé end-to-end sur Mac Intel.**
+
+- Venv : Python 3.13.5 (`.venv/`) — **pas 3.14** sur Mac Intel (cf. insights.md pour la raison onnxruntime).
+- Package `homebutler` installé en editable (`pip install -e .`).
+- Données générées + indexation FAISS/ChromaDB faites.
+- API FastAPI + Streamlit + Gradio testés.
+
+Ce qui reste à faire pour préparer la formation est essentiellement pédagogique (énoncés de TP) et non technique sur l'app elle-même.

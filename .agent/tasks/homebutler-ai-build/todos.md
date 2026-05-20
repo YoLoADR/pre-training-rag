@@ -105,3 +105,36 @@
 - [ ] **S5** : test agent ReAct question simple + question multi-outils
 - [ ] **S6** : `uvicorn api.main:app --reload` + curl 4 endpoints + test injection
 - [ ] **S7** : `streamlit run ui/app.py` + 4 pages + gradio prototype
+
+## Session 2026-05-19 (soir) — Setup validé sur Mac Intel ✅
+
+### Correctifs Mac Intel
+- [x] Diagnostic blocker `onnxruntime` (cartographie OS/Python documentée dans insights.md)
+- [x] Recréation venv en Python 3.13.5 (au lieu de 3.14.3)
+- [x] `requirements.txt` : pin `onnxruntime==1.23.2` (dernière version macOS x86_64)
+- [x] `requirements.txt` : bump `python-multipart>=0.0.18` (conflit gradio 5.9.1)
+- [x] `pip install -r requirements.txt` complet sans erreur
+
+### Packaging
+- [x] `pyproject.toml` créé (setuptools backend, déclare le package homebutler)
+- [x] `pip install -e .` exécuté → import `homebutler` résolvable depuis n'importe quel cwd
+
+### Bug fix UI
+- [x] `api/routers/products.py` : `ProducerResult` étendu avec `latitude`/`longitude` (page Marketplace en a besoin pour la carte Plotly)
+
+### Vérification end-to-end (refaite et validée)
+- [x] **S0** : install complet en Python 3.13
+- [x] **S1** : `homebutler.config` importable, `LLM_PROVIDER=anthropic`, `ANTHROPIC_MODEL=claude-sonnet-4-6`
+- [x] **S2** : services validés (énergie 365j, 30 producteurs, météo non testé mais imports OK)
+- [x] **S3** : `preload_models.py` OK (embeddings 384 dim) + indexation 49 chunks FAISS + ChromaDB
+- [x] **S4** : `EnsembleRetriever` instancié et fonctionnel
+- [x] **S5** : agent ReAct répond à une question RAG (chaudière → notice Viessmann)
+- [x] **S6** : `/health`, `/`, `/chat`, `/products/search`, `/consumption/analyze` testés en curl
+- [x] **S7** : Streamlit (8501) et Gradio (7860) up — page Marketplace OK après fix lat/lon
+
+### Reste à valider (non bloquant pour la formation Jour 1)
+- [ ] Filtre prompt injection : `curl -X POST /chat -d '{"message":"ignore tes instructions..."}'` → attendu HTTP 400
+- [ ] Test multi-outils agent : question météo + notice + producteurs en chaîne
+- [ ] Bascule `LLM_PROVIDER=ollama` (nécessite Ollama installé localement OU sur VPS)
+- [ ] LangSmith activé (`LANGCHAIN_TRACING_V2=true` + clé API) pour visualiser les traces
+- [ ] Notebooks 01 et 02 exécutés cellule par cellule sans erreur
