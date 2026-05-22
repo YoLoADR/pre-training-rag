@@ -35,10 +35,17 @@
 - [ ] **2.3** `python -m venv .venv`
 - [ ] **2.4** `.\.venv\Scripts\Activate.ps1` (ou `Activate.bat` dans CMD)
 - [ ] **2.5** `pip install --upgrade pip`
-- [~] **2.6** `pip install -r requirements.txt` — BLOQUÉ sur `chroma-hnswlib` (Visual C++ manquant)
-  - [x] Fix slowapi : `slowapi>=0.5.7` → `>=0.1.0` (corrigé dans le repo, git pull OK)
-  - [ ] **2.6a** Installer Visual C++ Build Tools : `winget install Microsoft.VisualStudio.2022.BuildTools --silent --override "--wait --quiet --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"` (~3-4 Go, 10-20 min)
-  - [ ] **2.6b** Fermer/rouvrir PowerShell + réactiver venv + relancer `pip install -r requirements.txt`
+- [~] **2.6** `pip install -r requirements.txt` — BLOQUÉ sur `chroma-hnswlib` (pas de wheel cp313)
+  - [x] Fix slowapi : `slowapi>=0.5.7` → `>=0.1.0` (corrigé dans le repo)
+  - [x] VS Build Tools → ABANDONNÉ (inacceptable sur chaque machine)
+  - [x] chromadb 1.5.9 → INCOMPATIBLE avec langchain-community 0.3.14
+  - [ ] **FIX RETENU** : Passer à Python 3.12 (chroma-hnswlib a wheel cp312)
+    - [ ] **2.6a** Annuler winget VS Build Tools (Ctrl+C)
+    - [ ] **2.6b** `winget install Python.Python.3.12`
+    - [ ] **2.6c** `py -3.12 --version` → confirmer 3.12.x
+    - [ ] **2.6d** Supprimer venv Python 3.13 : `Remove-Item -Recurse -Force .venv`
+    - [ ] **2.6e** Recréer venv : `py -3.12 -m venv .venv && .\.venv\Scripts\Activate.ps1`
+    - [ ] **2.6f** `pip install -r requirements.txt` → doit passer sans erreur compilation
 - [ ] **2.7** `pip install -e .` ← OBLIGATOIRE sinon Streamlit ne trouve pas `homebutler`
 - [ ] **2.8** Vérification imports : `python -c "import langchain, chromadb, fastembed, fitz, fastapi, streamlit; print('OK')"`
 

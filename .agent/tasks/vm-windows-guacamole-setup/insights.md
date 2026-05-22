@@ -142,6 +142,14 @@ venv         : ❌ absent (dépend du clone)
 .env         : ❌ absent (dépend du clone)
 ```
 
+### Python 3.12 requis sur Windows (pas 3.13) — Finding critique
+- **Cause racine** : `chroma-hnswlib==0.7.6` (dépendance de `chromadb 0.5.23`) n'a PAS de wheel Windows pour Python 3.13 (cp313). Max supporté = cp312.
+- **chromadb 1.5.x** : incompatible avec `langchain-community==0.3.14` (constraint `<0.7.0` hardcodée dans langchain)
+- **Seule solution sans compilation** : utiliser **Python 3.12** — `chroma-hnswlib 0.7.6` a un wheel `cp312-win_amd64` pré-compilé ✅
+- **Fix immédiat** : `winget install Python.Python.3.12` → supprimer `.venv` → recréer avec `py -3.12 -m venv .venv`
+- **Fix install script** : remplacer `python-3.13.13-amd64.exe` par `python-3.12.x-amd64.exe` dans `Install-FormationRAFT.ps1` ET sur le partage réseau `\\192.168.10.251\Install\COURS\RAFT\RAVINO`
+- **À signaler formateur** : documentation du projet dit "Python 3.13" mais Windows nécessite 3.12 à cause de chroma-hnswlib. Mac Intel et Linux 3.13 restent valides.
+
 ### chroma-hnswlib — Visual C++ Build Tools manquants (bloquant)
 - **Erreur** : `Failed building wheel for chroma-hnswlib` → `Microsoft Visual C++ 14.0 or greater is required`
 - **Cause** : `chromadb==0.5.23` dépend de `chroma-hnswlib` qui est une extension C++ compilée à la volée.
