@@ -90,22 +90,45 @@
 
 ---
 
-## Résultats réels (à compléter pendant le setup)
+## Résultats réels
 
-### Phase 0 — Pré-vérification
+### Phase 0 — Pré-vérification (2026-05-22)
 ```
-Script "Install-Formati..." : [À remplir]
-python --version : [À remplir]
-git --version : [À remplir]
-BIOS Mode (UEFI/Legacy) : [À remplir]
+Script "Install-Formati..." : Install-FormationRAFT.ps1 — script PowerShell complet (idempotent)
+python --version            : Python 3.13.13 ✅
+claude --version            : non reconnu ❌ (à installer)
+Architecture retenue        : Python NATIF Windows (pas WSL2)
+Chemin projet               : C:\Formation_RAFT\pre-training-rag
 ```
 
-### Phase 1 — Environnement
+### Ce que le script Install-FormationRAFT.ps1 fait automatiquement
 ```
-WSL2 installé : [À remplir]
-Ubuntu version : [À remplir]
-Python3.13 version : [À remplir]
-IP WSL2 (hostname -I) : [À remplir]
+1. Installe Git for Windows (winget)
+2. Installe Python 3.13.13 depuis partage réseau \\192.168.10.251\Install\COURS\RAFT\RAVINO
+3. Installe Docker Desktop depuis le partage
+4. Installe Ollama depuis le partage (OllamaSetup.exe)
+5. Pull mistral:7b-instruct (~4 Go)
+6. Clone https://github.com/YoLoADR/pre-training-rag.git → C:\Formation_RAFT\pre-training-rag
+7. Crée venv .venv avec Python 3.13
+8. pip install -r requirements.txt + pip install -e .
+9. Crée .env (avec placeholders ANTHROPIC_API_KEY et LANGCHAIN_API_KEY)
+10. python scripts/preload_models.py (fastembed ~100 Mo)
+```
+
+### Implication architecture — Réseau
+```
+Installation native Windows (pas WSL2)
+→ Services accessibles via http://localhost:PORT depuis Firefox Windows
+→ Pas besoin de hostname -I / IP WSL2
+→ Commande activation venv : C:\Formation_RAFT\pre-training-rag\.venv\Scripts\Activate.ps1
+```
+
+### Modèle Ollama du script vs plan révisé
+```
+Script installe : mistral:7b-instruct
+Plan révisé recommande : qwen2.5:7b-instruct (principal) + phi4-mini (backup)
+→ Action : après vérif mistral OK, pull qwen2.5 + phi4-mini en plus
+→ Mettre à jour OLLAMA_MODEL dans .env selon le jour de formation
 ```
 
 ### Phase 4 — Ollama GPU verdict

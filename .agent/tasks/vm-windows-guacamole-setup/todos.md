@@ -6,28 +6,25 @@
 
 ## Phase 0 — Pré-vérification
 
-- [ ] **0.1** Double-cliquer sur `Install-Formati...` sur le bureau → noter ce qui est installé
-- [ ] **0.2** Ouvrir CMD → `python --version` et `git --version` → noter les versions ou "non trouvé"
-- [ ] **0.3** Vérifier génération HyperV : `systeminfo | findstr /i "BIOS"` → UEFI ou Legacy ?
+- [x] **0.1** Double-cliquer sur `Install-Formati...` sur le bureau → script `Install-FormationRAFT.ps1` déjà exécuté
+- [x] **0.2** `python --version` → **Python 3.13.13** ✅ — installé en natif Windows
+- [x] **0.3** HyperV Gen 2 confirmé implicitement (script a tourné, pas de WSL2 utilisé — installation 100% native Windows)
+- [x] **0.4** Architecture choisie : **Python natif Windows** (pas WSL2) → `localhost` fonctionne directement dans Firefox
+- [x] **0.5** Projet cloné à `C:\Formation_RAFT\pre-training-rag` (chemin défini dans le script)
+- [x] **0.6** Claude Code CLI absent : `claude --version` → commande non reconnue
 
 ---
 
 ## Phase 1 — Environnement système
 
-### Voie A — WSL2 (si UEFI confirmé)
-- [ ] **1A.1** Confirmer avec admin que nested virtualization est activée sur la VM HyperV
-- [ ] **1A.2** `wsl --install` dans PowerShell admin → redémarrer
-- [ ] **1A.3** Créer user Unix dans Ubuntu (`formateur` / `raft2026`)
-- [ ] **1A.4** `sudo apt update && apt upgrade -y`
-- [ ] **1A.5** `sudo add-apt-repository ppa:deadsnakes/ppa && apt install python3.13 python3.13-venv python3.13-dev git curl`
-- [ ] **1A.6** `python3.13 --version` → confirmer Python 3.13.x
-- [ ] **1A.7** `hostname -I` → noter l'IP WSL2 (ex: 172.x.x.x) — utilisée pour tous les accès browser
-
-### Voie B — Fallback Python natif Windows (si Legacy ou WSL2 échoue)
-- [ ] **1B.1** `winget install Git.Git` dans PowerShell admin
-- [ ] **1B.2** Télécharger Python 3.13 depuis python.org → installer avec "Add to PATH"
-- [ ] **1B.3** `python --version` dans Git Bash → confirmer 3.13.x
-- [ ] **1B.4** Noter : remplacer `source .venv/bin/activate` par `.venv/Scripts/activate` dans toutes les commandes
+### Voie retenue — Python natif Windows (script Install-FormationRAFT.ps1 déjà exécuté)
+- [x] **1.1** Python 3.13.13 installé (`C:\Users\PLB\AppData\Local\Programs\Python\Python313\`)
+- [ ] **1.2** Vérifier Git : `git --version` dans CMD
+- [ ] **1.3** Vérifier Ollama : `ollama --version` dans CMD
+- [ ] **1.4** Vérifier projet cloné : `dir C:\Formation_RAFT\pre-training-rag`
+- [ ] **1.5** Vérifier venv : `dir C:\Formation_RAFT\pre-training-rag\.venv\Scripts\python.exe`
+- [ ] **1.6** Vérifier .env : `type C:\Formation_RAFT\pre-training-rag\.env`
+- [ ] **1.7** Vérifier modèle Ollama : `ollama list` → chercher mistral:7b-instruct
 
 ---
 
