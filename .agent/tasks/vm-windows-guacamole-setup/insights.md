@@ -142,6 +142,17 @@ venv         : ❌ absent (dépend du clone)
 .env         : ❌ absent (dépend du clone)
 ```
 
+### chroma-hnswlib — Visual C++ Build Tools manquants (bloquant)
+- **Erreur** : `Failed building wheel for chroma-hnswlib` → `Microsoft Visual C++ 14.0 or greater is required`
+- **Cause** : `chromadb==0.5.23` dépend de `chroma-hnswlib` qui est une extension C++ compilée à la volée.
+  Le script d'install (Install-FormationRAFT.ps1) installe Docker Desktop mais pas les VS Build Tools.
+- **Fix** : installer Microsoft C++ Build Tools via winget (~3-4 Go, 10-20 min) puis relancer pip install
+  ```powershell
+  winget install Microsoft.VisualStudio.2022.BuildTools --silent --override "--wait --quiet --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
+  ```
+- **Après install** : fermer et rouvrir PowerShell, réactiver le venv, relancer `pip install -r requirements.txt`
+- **À signaler au formateur** : ajouter Visual C++ Build Tools dans le script Install-FormationRAFT.ps1 (avant pip install)
+
 ### Pourquoi le clone a échoué dans le script
 Le script installe Git via winget PUIS clone immédiatement.
 Winget n'actualise pas le PATH de la session PowerShell en cours.
