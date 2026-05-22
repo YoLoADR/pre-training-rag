@@ -147,8 +147,13 @@ venv         : ❌ absent (dépend du clone)
 - **chromadb 1.5.x** : incompatible avec `langchain-community==0.3.14` (constraint `<0.7.0` hardcodée dans langchain)
 - **Seule solution sans compilation** : utiliser **Python 3.12** — `chroma-hnswlib 0.7.6` a un wheel `cp312-win_amd64` pré-compilé ✅
 - **Fix immédiat** : `winget install Python.Python.3.12` → supprimer `.venv` → recréer avec `py -3.12 -m venv .venv`
-- **Fix install script** : remplacer `python-3.13.13-amd64.exe` par `python-3.12.x-amd64.exe` dans `Install-FormationRAFT.ps1` ET sur le partage réseau `\\192.168.10.251\Install\COURS\RAFT\RAVINO`
-- **À signaler formateur** : documentation du projet dit "Python 3.13" mais Windows nécessite 3.12 à cause de chroma-hnswlib. Mac Intel et Linux 3.13 restent valides.
+- **Fix install script** : Ajouter VS Build Tools dans `Install-FormationRAFT.ps1` avant le `pip install`, sur une seule ligne winget. Acceptable car : (1) script tournant une seule fois par machine, (2) admin prépare les VMs en avance.
+- **Formateur décision** : rester Python 3.13 + VS Build Tools (pas downgrade 3.12).
+- **VS Build Tools installé** : version 17.14.33, redémarrage requis post-install.
+- **Commande à ajouter dans le script Install-FormationRAFT.ps1** (avant la section pip install) :
+  ```powershell
+  winget install Microsoft.VisualStudio.2022.BuildTools --silent --override "--wait --quiet --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
+  ```
 
 ### chroma-hnswlib — Visual C++ Build Tools manquants (bloquant)
 - **Erreur** : `Failed building wheel for chroma-hnswlib` → `Microsoft Visual C++ 14.0 or greater is required`

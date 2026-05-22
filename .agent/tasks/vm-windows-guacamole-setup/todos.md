@@ -39,13 +39,12 @@
   - [x] Fix slowapi : `slowapi>=0.5.7` → `>=0.1.0` (corrigé dans le repo)
   - [x] VS Build Tools → ABANDONNÉ (inacceptable sur chaque machine)
   - [x] chromadb 1.5.9 → INCOMPATIBLE avec langchain-community 0.3.14
-  - [ ] **FIX RETENU** : Passer à Python 3.12 (chroma-hnswlib a wheel cp312)
-    - [ ] **2.6a** Annuler winget VS Build Tools (Ctrl+C)
-    - [ ] **2.6b** `winget install Python.Python.3.12`
-    - [ ] **2.6c** `py -3.12 --version` → confirmer 3.12.x
-    - [ ] **2.6d** Supprimer venv Python 3.13 : `Remove-Item -Recurse -Force .venv`
-    - [ ] **2.6e** Recréer venv : `py -3.12 -m venv .venv && .\.venv\Scripts\Activate.ps1`
-    - [ ] **2.6f** `pip install -r requirements.txt` → doit passer sans erreur compilation
+  - [x] **FIX RETENU** : VS Build Tools 2022 installés via winget (version 17.14.33) ✅
+    - [x] **2.6a** `winget install Microsoft.VisualStudio.2022.BuildTools` → téléchargé et installé
+    - [ ] **2.6b** **REDÉMARRER la VM** (requis pour finaliser l'installation du compilateur)
+    - [ ] **2.6c** Après reboot : rouvrir PowerShell, `cd C:\Formation_RAFT\pre-training-rag`, `.\.venv\Scripts\Activate.ps1`
+    - [ ] **2.6d** `pip install -r requirements.txt` → chroma-hnswlib devrait compiler sans erreur
+  - [ ] **TODO script** : Ajouter VS Build Tools dans `Install-FormationRAFT.ps1` (avant le pip install)
 - [ ] **2.7** `pip install -e .` ← OBLIGATOIRE sinon Streamlit ne trouve pas `homebutler`
 - [ ] **2.8** Vérification imports : `python -c "import langchain, chromadb, fastembed, fitz, fastapi, streamlit; print('OK')"`
 
