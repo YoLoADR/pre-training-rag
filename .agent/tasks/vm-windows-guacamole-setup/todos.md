@@ -19,22 +19,25 @@
 
 ### Voie retenue — Python natif Windows (script Install-FormationRAFT.ps1 déjà exécuté)
 - [x] **1.1** Python 3.13.13 installé (`C:\Users\PLB\AppData\Local\Programs\Python\Python313\`)
-- [ ] **1.2** Vérifier Git : `git --version` dans CMD
-- [ ] **1.3** Vérifier Ollama : `ollama --version` dans CMD
-- [ ] **1.4** Vérifier projet cloné : `dir C:\Formation_RAFT\pre-training-rag`
-- [ ] **1.5** Vérifier venv : `dir C:\Formation_RAFT\pre-training-rag\.venv\Scripts\python.exe`
-- [ ] **1.6** Vérifier .env : `type C:\Formation_RAFT\pre-training-rag\.env`
-- [ ] **1.7** Vérifier modèle Ollama : `ollama list` → chercher mistral:7b-instruct
+- [x] **1.2** Git : `git version 2.54.0.windows.1` ✅
+- [x] **1.3** Ollama : `ollama version 0.24.0` ✅
+- [x] **1.4** Projet cloné : ❌ `C:\Formation_RAFT` existe mais `pre-training-rag` absent — clone a échoué (git pas dans PATH au moment du script)
+- [x] **1.5** Venv : ❌ absent (clone manquant)
+- [x] **1.6** .env : ❌ absent (clone manquant)
+- [x] **1.7** Modèle Ollama `mistral:7b-instruct` : ✅ présent (4.4 GB, il y a 41h)
 
 ---
 
-## Phase 2 — Projet
+## Phase 2 — Projet (à faire dans PowerShell)
 
-- [ ] **2.1** `git clone https://github.com/YoLoADR/pre-training-rag.git ~/formation`
-- [ ] **2.2** `cd ~/formation && python3.13 -m venv .venv && source .venv/bin/activate`
-- [ ] **2.3** `pip install --upgrade pip && pip install -r requirements.txt`
-- [ ] **2.4** `pip install -e .` ← obligatoire sinon Streamlit ne trouve pas `homebutler`
-- [ ] **2.5** Vérification imports critiques (langchain, chromadb, fastembed, fitz, fastapi, streamlit)
+- [ ] **2.1** `git clone https://github.com/YoLoADR/pre-training-rag.git C:\Formation_RAFT\pre-training-rag`
+- [ ] **2.2** `cd C:\Formation_RAFT\pre-training-rag`
+- [ ] **2.3** `python -m venv .venv`
+- [ ] **2.4** `.\.venv\Scripts\Activate.ps1` (ou `Activate.bat` dans CMD)
+- [ ] **2.5** `pip install --upgrade pip`
+- [ ] **2.6** `pip install -r requirements.txt` (5-15 min)
+- [ ] **2.7** `pip install -e .` ← OBLIGATOIRE sinon Streamlit ne trouve pas `homebutler`
+- [ ] **2.8** Vérification imports : `python -c "import langchain, chromadb, fastembed, fitz, fastapi, streamlit; print('OK')"`
 
 ---
 

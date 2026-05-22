@@ -131,6 +131,24 @@ Plan révisé recommande : qwen2.5:7b-instruct (principal) + phi4-mini (backup)
 → Mettre à jour OLLAMA_MODEL dans .env selon le jour de formation
 ```
 
+### Phase 1 — Vérification stack (2026-05-22)
+```
+git version  : 2.54.0.windows.1 ✅
+ollama       : 0.24.0 ✅
+ollama list  : mistral:7b-instruct (4.4 GB, modifié il y a 41h) ✅
+projet clone : ❌ C:\Formation_RAFT existe mais pre-training-rag absent
+               → cause probable : git pas dans PATH au moment du script
+venv         : ❌ absent (dépend du clone)
+.env         : ❌ absent (dépend du clone)
+```
+
+### Pourquoi le clone a échoué dans le script
+Le script installe Git via winget PUIS clone immédiatement.
+Winget n'actualise pas le PATH de la session PowerShell en cours.
+`Refresh-Path` (fonction interne du script) tente de le faire mais parfois insuffisant.
+→ Le `git clone` s'est exécuté avant que `git.exe` soit trouvable.
+→ Solution : relancer le clone manuellement dans un nouveau terminal (git dans le PATH maintenant).
+
 ### Phase 4 — Ollama GPU verdict
 ```
 ollama ps PROCESSOR : [À remplir → 100% CPU ou 100% GPU]
