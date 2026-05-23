@@ -1,0 +1,20 @@
+# ─────────────────────────────────────────────────────────────────────────
+# Atelier 01 — LLM Baseline (J1 matin)
+# Scope : un LLM seul (sans RAG), observer hallucinations + température.
+# ~8 packages.
+# ─────────────────────────────────────────────────────────────────────────
+
+# Core
+python-dotenv==1.0.1
+pydantic>=2.7.4
+pydantic-settings>=2.3.4
+
+# LangChain (interface unifiée pour tous les LLM)
+langchain==0.3.14
+langchain-core==0.3.41
+langchain-community==0.3.14
+langchain-anthropic==0.3.0
+
+# Providers LLM (Claude API + Ollama local)
+anthropic==0.40.0
+ollama==0.4.4

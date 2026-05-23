@@ -1,0 +1,17 @@
+# ─────────────────────────────────────────────────────────────────────────
+# Atelier 04 — Fine-tuning LoRA/QLoRA (J2 après-midi)
+# Scope : atelier 03 + scripts de génération/exploration dataset Q/R.
+#
+# NOTE IMPORTANTE :
+# Le fine-tuning lui-même (transformers, peft, trl, bitsandbytes, accelerate)
+# tourne dans Google Colab GPU T4 (gratuit). Les packages FT n'ont pas besoin
+# d'être installés en local — voir notebooks/03_finetuning_lora.ipynb pour
+# le bloc `!pip install ...` à exécuter dans Colab.
+# ─────────────────────────────────────────────────────────────────────────
+
+# ── atelier 03 (LLM + RAG + Agent) ────────────────────────────────────────
+-r requirements_atelier03.txt
+
+# ── Dataset Q/R (génération, exploration locale) ──────────────────────────
+# pandas et numpy déjà présents via atelier 02
+# Les packages FT (transformers/peft/trl/bitsandbytes) sont installés dans Colab
