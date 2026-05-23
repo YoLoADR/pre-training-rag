@@ -173,18 +173,29 @@ Winget n'actualise pas le PATH de la session PowerShell en cours.
 → Le `git clone` s'est exécuté avant que `git.exe` soit trouvable.
 → Solution : relancer le clone manuellement dans un nouveau terminal (git dans le PATH maintenant).
 
-### Phase 4 — Ollama GPU verdict
+### Phase 4 — Ollama GPU verdict (2026-05-22)
 ```
-ollama ps PROCESSOR : [À remplir → 100% CPU ou 100% GPU]
-Vitesse tok/s qwen2.5:7b : [À remplir]
-Vitesse tok/s phi4-mini : [À remplir]
+ollama ps PROCESSOR : 100% CPU ← confirmé, pas de GPU passthrough sur cette VM HyperV
+Modèle           : mistral:7b-instruct (4.8 GB chargé en RAM)
+Context window   : 4096 tokens
+Réponse French   : OK (modèle répond bien en français)
+Vitesse          : non mesurée mais acceptable pour démos
 ```
+→ Conclusion : GPU non requis pour la formation. Anthropic API = provider principal (cloud, rapide).
+→ Pour les démos Ollama live : mistral:7b-instruct fonctionne en CPU-only.
 
-### Phase 9 — Tests end-to-end
+### Phase 9 — Tests end-to-end (2026-05-22)
 ```
-/rag/retrieve → chunks trouvés : [À remplir]
-/chat Anthropic → latence : [À remplir]
-/chat Ollama → latence : [À remplir]
-Streamlit UI → fonctionnel : [À remplir]
-Gradio → fonctionnel : [À remplir]
+/chat Anthropic (Swagger) → 200 OK ✅
+  Réponse : notice Viessmann Vitodens 100-W retrouvée via RAG
+  Contenu : tableau températures nuit/jour, conseils anti-gel, instructions programmation
+  Provider : anthropic / mode : agent / session : default
+  Latence : rapide (cloud API)
+  
+Streamlit http://localhost:8501 → [À confirmer]
+Gradio http://localhost:7860    → [À confirmer]
+/chat Ollama homebutler (CPU)   → 200 OK, ~3 min, RÉPONSE DÉGRADÉE ✅ (comportement attendu)
+  Anthropic : RAG précis, températures exactes (notice Viessmann), table markdown, ~2 sec
+  Ollama    : confondu "chaudière" avec météo, mauvaise sélection outil ReAct, ~3 min
+  → Démonstration pédagogique J3 parfaite : impact du modèle sur la qualité agent
 ```

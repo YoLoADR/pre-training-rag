@@ -402,5 +402,205 @@ Prévoir **20 Go** pour laisser de la marge (logs, notebooks, exports).
 
 ---
 
+## 6. Guide de débogage — VM Windows (Guacamole)
+
+> Section formateur. Historique des problèmes rencontrés lors du setup de la VM Guacamole (Windows 10, HyperV, mai 2026) et leurs solutions validées.
+
+### 6.1 Contexte de la VM Windows Guacamole
+
+| Paramètre | Valeur |
+|---|---|
+| OS | Windows 10 (10.0.26200.8246) |
+| Type VM | HyperV (virtualisation imbriquée non activée) |
+| Accès | Apache Guacamole (navigateur → RDP) |
+| User | PLB (FORMATEUR) |
+| Python installé | 3.13.13 (natif Windows, pas WSL2) |
+| Chemin projet | `C:\Formation_RAFT\pre-training-rag` |
+| Script d'install | `Install-FormationRAFT.ps1` (bureau Windows) |
+
+### 6.2 Problèmes rencontrés et solutions
+
+#### P1 — `git clone` non exécuté malgré le script d'installation
+
+**Symptôme** : `C:\Formation_RAFT` existe mais `pre-training-rag` est absent.
+
+**Cause** : Le script `Install-FormationRAFT.ps1` installe Git via winget puis clone immédiatement. La fonction `Refresh-Path` du script ne met pas toujours à jour le PATH dans la session PowerShell courante — `git.exe` est introuvable au moment du clone.
+
+**Solution** : Ouvrir un **nouveau** terminal PowerShell (git dans le PATH) et cloner manuellement :
+```powershell
+git clone https://github.com/YoLoADR/pre-training-rag.git C:\Formation_RAFT\pre-training-rag
+```
+
+**Fix script** : Ajouter après l'install de Git un redémarrage du shell ou un `$env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine')` explicite.
+
+---
+
+#### P2 — `slowapi>=0.5.7` introuvable lors du `pip install -r requirements.txt`
+
+**Symptôme** :
+```
+ERROR: Could not find a version that satisfies the requirement slowapi>=0.5.7
+(from versions: 0.1.0, 0.1.1, ..., 0.1.9)
+```
+
+**Cause** : Erreur de version dans `requirements.txt` — la version max de slowapi est `0.1.9`, pas `0.5.7`.
+
+**Solution** : Déjà corrigé dans le repo (`slowapi>=0.1.0`). Si un élève a une ancienne copie :
+```powershell
+git pull  # récupère le fix
+pip install -r requirements.txt
+```
+
+---
+
+#### P3 — `chroma-hnswlib` ne compile pas (Visual C++ manquant)
+
+**Symptôme** :
+```
+error: Microsoft Visual C++ 14.0 or greater is required.
+Failed building wheel for chroma-hnswlib
+```
+
+**Cause** : `chromadb==0.5.23` dépend de `chroma-hnswlib`, une extension C++. Il n'existe pas de wheel pré-compilé pour Python 3.13 Windows (max supporté = Python 3.12). Upgrade vers chromadb 1.x impossible car incompatible avec `langchain-community==0.3.14`.
+
+**Solution retenue (Python 3.13, pas de downgrade)** : installer Visual C++ Build Tools (une seule fois par machine) :
+```powershell
+# Dans PowerShell admin — durée ~20-40 min (téléchargement ~4 Go)
+winget install Microsoft.VisualStudio.2022.BuildTools --silent --override "--wait --quiet --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
+# Redémarrer la VM, puis relancer pip install -r requirements.txt
+```
+
+**Fix script** : Ajouter cette commande dans `Install-FormationRAFT.ps1` avant la section `pip install`.
+
+**Solution alternative (si connexion lente)** : utiliser Python 3.12 (`py -3.12 -m venv .venv`) — `chroma-hnswlib` a un wheel cp312 pré-compilé, zéro compilation nécessaire.
+
+---
+
+#### P4 — Commandes Python multilignes dans PowerShell via Guacamole
+
+**Symptôme** :
+```
+IndentationError: unexpected indent
+```
+
+**Cause** : Guacamole coupe les longues lignes. PowerShell interprète la suite comme une deuxième ligne Python indentée.
+
+**Solution** : Écrire le script dans un fichier `.py` via `Set-Content` + `Add-Content` (une commande courte par ligne) :
+```powershell
+Set-Content script.py "ligne 1"
+Add-Content script.py "ligne 2"
+Add-Content script.py "ligne 3"
+python script.py
+```
+
+---
+
+#### P5 — Modèle Ollama `homebutler` introuvable (404)
+
+**Symptôme** :
+```json
+{"detail": "Erreur agent : Ollama call failed with status code 404. Maybe your model is not found and you should pull the model with `ollama pull homebutler`."}
+```
+
+**Cause** : `OLLAMA_MODEL=homebutler` dans `.env` référence un modèle custom Ollama qui n'est pas encore créé sur la machine. Ce modèle est défini par le `Modelfile` du projet (ajouté en mai 2026).
+
+**Solution** :
+```powershell
+cd C:\Formation_RAFT\pre-training-rag
+git pull  # récupère le Modelfile
+ollama create homebutler -f Modelfile  # quelques secondes, pas de re-téléchargement
+```
+
+**Fix script** : Ajouter `ollama create homebutler -f Modelfile` dans `Install-FormationRAFT.ps1` après le `git clone`.
+
+---
+
+#### P6 — Avertissements non-bloquants à connaître
+
+Ces messages apparaissent systématiquement — ils sont **inoffensifs** et peuvent être ignorés :
+
+| Message | Source | Impact |
+|---|---|---|
+| `UserWarning: The model ... now uses mean pooling instead of CLS` | fastembed | Aucun — changement interne fastembed |
+| `UserWarning: huggingface_hub cache-system uses symlinks... machine does not support them` | HuggingFace | Aucun — cache fonctionne sans symlinks, occupe plus de disque |
+| `Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument` | chromadb | Aucun — bug telemetry chromadb, pas d'impact fonctionnel |
+| `LangChainDeprecationWarning: Please see the migration guide` | LangChain | Aucun — API dépréciée mais fonctionnelle en 0.3.x |
+| `LangSmithMissingAPIKeyWarning` | LangSmith | Aucun — normal si `LANGCHAIN_TRACING_V2=false` |
+| `UserWarning: The 'tuples' format for chatbot messages is deprecated` | Gradio | Aucun — dépreciation Gradio, à corriger en v6 |
+
+---
+
+### 6.3 Ordre de démarrage des services (Windows natif)
+
+```powershell
+# Chaque service dans un onglet PowerShell séparé (bouton + dans Windows Terminal)
+
+# Onglet 1 — FastAPI
+cd C:\Formation_RAFT\pre-training-rag
+.\.venv\Scripts\Activate.ps1
+uvicorn api.main:app --reload --port 8000
+
+# Onglet 2 — Streamlit
+cd C:\Formation_RAFT\pre-training-rag
+.\.venv\Scripts\Activate.ps1
+streamlit run ui/app.py
+
+# Onglet 3 — Gradio
+cd C:\Formation_RAFT\pre-training-rag
+.\.venv\Scripts\Activate.ps1
+python ui/gradio_prototype.py
+
+# Onglet 4 — Jupyter (notebooks)
+cd C:\Formation_RAFT\pre-training-rag
+.\.venv\Scripts\Activate.ps1
+jupyter notebook --port=8888
+```
+
+URLs d'accès (Windows natif — pas WSL2) :
+
+| Service | URL |
+|---|---|
+| FastAPI Swagger | `http://localhost:8000/docs` |
+| Streamlit UI | `http://localhost:8501` |
+| Gradio | `http://localhost:7860` |
+| Jupyter | `http://localhost:8888` |
+
+---
+
+### 6.4 Comparaison Anthropic vs Ollama (observée en conditions réelles)
+
+| Critère | Anthropic (claude-sonnet-4-6) | Ollama homebutler (mistral:7b-instruct CPU) |
+|---|---|---|
+| Latence (VM sans GPU) | ~2 secondes | ~2-5 minutes |
+| Qualité RAG | Excellente — retrouve les bons documents, répond précisément | Dégradée — peut confondre les outils (ex: météo au lieu de RAG) |
+| Suivi format ReAct | Très fiable | Fragile sur petits modèles |
+| Usage recommandé | J1, J2 (exercices) | J3 (démonstration impact modèle) |
+
+> **Message pédagogique J3** : cette différence de qualité illustre directement l'intérêt du fine-tuning RAFT — adapter un modèle local à un domaine précis pour réduire l'écart avec les modèles cloud.
+
+---
+
+### 6.5 Améliorations à apporter au script `Install-FormationRAFT.ps1`
+
+À intégrer lors de la prochaine révision du script (sur le partage `\\192.168.10.251\Install\COURS\RAFT\RAVINO`) :
+
+```powershell
+# 1. Avant la section pip install — ajouter les VS Build Tools
+winget install Microsoft.VisualStudio.2022.BuildTools --silent `
+  --override "--wait --quiet --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
+
+# 2. Après git clone — créer le modèle Ollama homebutler
+Push-Location $ProjectPath
+& ollama create homebutler -f Modelfile
+Pop-Location
+
+# 3. Forcer le rafraîchissement du PATH après winget Git
+$env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' +
+            [System.Environment]::GetEnvironmentVariable('Path','User')
+```
+
+---
+
+*Section ajoutée : mai 2026 — Session de validation VM Guacamole Windows*
 *Document produit pour la formation RAFT — PLB ref. RAFT v2026-0512*
 *Formateur : Yohann Ravino — Mise à jour : mai 2026*
