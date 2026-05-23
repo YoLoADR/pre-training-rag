@@ -14,6 +14,9 @@ from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/rag", tags=["rag"])
 
+# Atelier 05 scope guard — routes comparaison réservées à l'atelier 06
+_ENABLE_COMPARE = os.getenv("ENABLE_COMPARE_ROUTES", "false").lower() == "true"
+
 
 # ── Modèles ───────────────────────────────────────────────────────────────────
 
@@ -105,13 +108,16 @@ async def rag_retrieve(req: RetrieveRequest):
 
 # ── POST /rag/evaluate ────────────────────────────────────────────────────────
 
-@router.post("/evaluate", response_model=dict)
+@router.post("/evaluate", response_model=dict, include_in_schema=_ENABLE_COMPARE)
 async def rag_evaluate(req: EvaluateRequest):
     """
     Calcule Recall@1/@3/@5 sur les N premières paires du dataset QA.
     Pédagogie TP J1 : 'Quelle stratégie de découpage offre le meilleur rappel ?'
     Ground truth : si ≥1 chunk contient des mots-clés de la réponse de référence → hit.
+    Réservée à l'atelier 06 — activer ENABLE_COMPARE_ROUTES=true dans .env
     """
+    if not _ENABLE_COMPARE:
+        raise HTTPException(status_code=404, detail="Route réservée à l'atelier 06. Définir ENABLE_COMPARE_ROUTES=true dans .env")
     import asyncio
     from homebutler import config
 
@@ -176,12 +182,15 @@ async def rag_evaluate(req: EvaluateRequest):
 
 # ── POST /rag/compare-strategies ─────────────────────────────────────────────
 
-@router.post("/compare-strategies", response_model=dict)
+@router.post("/compare-strategies", response_model=dict, include_in_schema=_ENABLE_COMPARE)
 async def compare_strategies(query: str):
     """
     Lance fixed + recursive + ensemble sur la même query.
     Pédagogie J1 après-midi : montre que les stratégies retournent des chunks différents.
+    Réservée à l'atelier 06 — activer ENABLE_COMPARE_ROUTES=true dans .env
     """
+    if not _ENABLE_COMPARE:
+        raise HTTPException(status_code=404, detail="Route réservée à l'atelier 06. Définir ENABLE_COMPARE_ROUTES=true dans .env")
     results = {}
     for strategy in ["fixed", "recursive", "ensemble"]:
         try:

@@ -1,0 +1,16 @@
+--- a/ateliers/atelier-06-finetune-vs-rag/evaluate_pipeline.py
++++ b/ateliers/atelier-06-finetune-vs-rag/evaluate_pipeline.py
+@@ -29,12 +29,14 @@ QA_PATH = BASE / "data" / "qa_dataset" / "concierge_qa.jsonl"
+
+-def load_qa(n: int = 20) -> list[dict]:
++# BUG v1 : on charge le dataset d'entraînement au lieu du dataset de test
++TRAIN_QA_PATH = BASE / "data" / "qa_dataset" / "concierge_qa.jsonl"  # même fichier !
++
++def load_qa(n: int = 20) -> list[dict]:
+     if not QA_PATH.exists():
+         print(f"Dataset absent : {QA_PATH}")
+         print("Lance : python scripts/generate_qa_dataset.py")
+         sys.exit(1)
+-    with QA_PATH.open() as f:
++    with TRAIN_QA_PATH.open() as f:   # utilise le train set — illusion de recall parfait
+         return [json.loads(line) for line in f if line.strip()][:n]

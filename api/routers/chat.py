@@ -7,6 +7,7 @@ Endpoints :
 """
 
 import asyncio
+import os
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Request
@@ -15,6 +16,9 @@ from pydantic import BaseModel, Field
 from api.limiter import limiter
 
 router = APIRouter(prefix="/chat", tags=["chat"])
+
+# Atelier 05 scope guard — route comparaison réservée à l'atelier 06
+_ENABLE_COMPARE = os.getenv("ENABLE_COMPARE_ROUTES", "false").lower() == "true"
 
 
 # ── Modèles Pydantic ──────────────────────────────────────────────────────────
@@ -171,13 +175,16 @@ async def chat(request: Request, req: ChatRequest):
 
 # ── POST /chat/compare ────────────────────────────────────────────────────────
 
-@router.post("/compare")
+@router.post("/compare", include_in_schema=_ENABLE_COMPARE)
 async def chat_compare(req: ChatRequest):
     """
     Lance la même question dans les 3 modes en parallèle.
     Démo pédagogique centrale J3 : évaluation comparative LLM seul vs RAG vs agent.
     Correspond à la grille de décision (draft.md) : LLM seul → hallucine | RAG → factuel | agent → orchestré.
+    Réservée à l'atelier 06 — activer ENABLE_COMPARE_ROUTES=true dans .env
     """
+    if not _ENABLE_COMPARE:
+        raise HTTPException(status_code=404, detail="Route réservée à l'atelier 06. Définir ENABLE_COMPARE_ROUTES=true dans .env")
     from homebutler import config
 
     try:

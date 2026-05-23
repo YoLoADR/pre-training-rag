@@ -1,0 +1,27 @@
+--- a/ateliers/atelier-06-finetune-vs-rag/evaluate_pipeline.py
++++ b/ateliers/atelier-06-finetune-vs-rag/evaluate_pipeline.py
+@@ -64,11 +64,12 @@ def compare_modes(questions: list[str]) -> dict:
+     results = {"llm_only": [], "rag_only": [], "agent": []}
+     latencies = {"llm_only": [], "rag_only": [], "agent": []}
+
+-    for q in questions:
++    # BUG v3 : mesure sur 1 seul appel par mode — biais cold-start
++    q = questions[0]  # seulement la première question
++    if True:
+         for mode in ("llm_only", "rag_only", "agent"):
+             t0 = time.time()
+             r = requests.post(f"{API}/chat",
+                               json={"message": q, "mode": mode},
+                               timeout=60)
+             elapsed = time.time() - t0
+-            latencies[mode].append(elapsed)
++            latencies[mode] = [elapsed]  # écrase au lieu d'accumuler
+             if r.status_code == 200:
+-                results[mode].append(r.json().get("response", ""))
++                results[mode] = [r.json().get("response", "")]
+                 print(f"  [{mode:10s}] {q[:50]:50s}  → {elapsed:.1f}s")
+             else:
+-                results[mode].append(f"HTTP {r.status_code}")
++                results[mode] = [f"HTTP {r.status_code}"]
+
+     return {"answers": results, "latencies": latencies}

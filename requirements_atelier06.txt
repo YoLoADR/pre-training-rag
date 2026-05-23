@@ -1,0 +1,15 @@
+# ─────────────────────────────────────────────────────────────────────────
+# Atelier 06 — Fine-tuning vs RAG / RAFT (atelier de synthèse)
+# Scope : atelier 05 complet + routes comparaison actives (ENABLE_COMPARE_ROUTES=true)
+# ─────────────────────────────────────────────────────────────────────────
+
+# ── atelier 05 (= atelier 04 + FastAPI + Streamlit + Langfuse) ────────────
+-r requirements_atelier05.txt
+
+# ── Métriques d'évaluation complémentaires ────────────────────────────────
+# RAGAS — framework d'évaluation RAG (recall@k, faithfulness, answer relevance)
+ragas>=0.1.0
+
+# ── Présentation / rapport ─────────────────────────────────────────────────
+# Pour la soutenance et le rapport TCO (optionnel)
+tabulate>=0.9.0

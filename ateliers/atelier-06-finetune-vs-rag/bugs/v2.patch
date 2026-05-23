@@ -1,0 +1,22 @@
+--- a/ateliers/atelier-06-finetune-vs-rag/evaluate_pipeline.py
++++ b/ateliers/atelier-06-finetune-vs-rag/evaluate_pipeline.py
+@@ -100,6 +100,19 @@ def show_summary(strategies_eval: dict, latencies: dict) -> None:
+     print("  LLM seul        : Recall@5 ≈ 0.15 (pas de retrieval, invente)")
+     print("  Hybride (RAFT)  : 94 % QA factuel, 95 % style, 96 % médical")
+
++
++# BUG v2 — BLEU score utilisé pour mesurer la qualité du ton/style
++def evaluate_style_quality(responses: list[str], references: list[str]) -> float:
++    """
++    BUG : BLEU est une métrique de traduction automatique basée sur le chevauchement
++    de n-grammes. Elle mesure la similarité lexicale, pas la qualité conversationnelle
++    ni le ton 'Merenza'. Un response de haute qualité avec un vocabulaire différent
++    de la référence aura un BLEU très bas malgré une excellente qualité.
++    """
++    from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
++    scores = []
++    for resp, ref in zip(responses, references):
++        score = sentence_bleu([ref.split()], resp.split(),
++                               smoothing_function=SmoothingFunction().method1)
++        scores.append(score)
++    return sum(scores) / len(scores) if scores else 0.0
