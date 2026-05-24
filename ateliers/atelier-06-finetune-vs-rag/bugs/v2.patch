@@ -1,10 +1,11 @@
+diff --git a/ateliers/atelier-06-finetune-vs-rag/evaluate_pipeline.py b/ateliers/atelier-06-finetune-vs-rag/evaluate_pipeline.py
+index 6e5750b..220f442 100644
 --- a/ateliers/atelier-06-finetune-vs-rag/evaluate_pipeline.py
 +++ b/ateliers/atelier-06-finetune-vs-rag/evaluate_pipeline.py
-@@ -100,6 +100,19 @@ def show_summary(strategies_eval: dict, latencies: dict) -> None:
-     print("  LLM seul        : Recall@5 ≈ 0.15 (pas de retrieval, invente)")
+@@ -112,6 +112,23 @@ def show_summary(strategies_eval: dict, latencies: dict) -> None:
      print("  Hybride (RAFT)  : 94 % QA factuel, 95 % style, 96 % médical")
-
-+
+ 
+ 
 +# BUG v2 — BLEU score utilisé pour mesurer la qualité du ton/style
 +def evaluate_style_quality(responses: list[str], references: list[str]) -> float:
 +    """
@@ -20,3 +21,8 @@
 +                               smoothing_function=SmoothingFunction().method1)
 +        scores.append(score)
 +    return sum(scores) / len(scores) if scores else 0.0
++
++
+ # ─── TODO 6 — Compléter grille_decision.md ──────────────────────────────
+ def todo_grille() -> None:
+     print("\n═══ TODO 6 — Compléter grille_decision.md ═══")

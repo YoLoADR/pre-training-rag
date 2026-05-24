@@ -1,9 +1,11 @@
+diff --git a/ateliers/atelier-06-finetune-vs-rag/evaluate_pipeline.py b/ateliers/atelier-06-finetune-vs-rag/evaluate_pipeline.py
+index 6e5750b..6ac94e0 100644
 --- a/ateliers/atelier-06-finetune-vs-rag/evaluate_pipeline.py
 +++ b/ateliers/atelier-06-finetune-vs-rag/evaluate_pipeline.py
-@@ -64,11 +64,12 @@ def compare_modes(questions: list[str]) -> dict:
+@@ -71,19 +71,21 @@ def compare_modes(questions: list[str]) -> dict:
      results = {"llm_only": [], "rag_only": [], "agent": []}
      latencies = {"llm_only": [], "rag_only": [], "agent": []}
-
+ 
 -    for q in questions:
 +    # BUG v3 : mesure sur 1 seul appel par mode — biais cold-start
 +    q = questions[0]  # seulement la première question
@@ -23,5 +25,6 @@
              else:
 -                results[mode].append(f"HTTP {r.status_code}")
 +                results[mode] = [f"HTTP {r.status_code}"]
-
+ 
      return {"answers": results, "latencies": latencies}
+ 
