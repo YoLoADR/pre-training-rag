@@ -70,6 +70,20 @@ def get_ensemble_retriever(faiss_k=4, chroma_k=3):
 
 > 💡 **Analogie** : un sommelier qui combine SA mémoire (FAISS, sens du goût) et le CATALOGUE filtré (Chroma, par région/cépage). Les deux signaux pondérés donnent la meilleure recommandation.
 
+**📚 Dépendances natives utilisées**
+
+- `langchain.retrievers.EnsembleRetriever(...)` — combine plusieurs retrievers via Reciprocal Rank Fusion (RRF). Paramètres :
+  - `retrievers: list[BaseRetriever]` — liste des retrievers à combiner (ex. `[faiss_retriever, chroma_retriever]`).
+  - `weights: list[float]` — un poids par retriever, doit sommer à 1.0 (sinon LangChain normalise). Ex. `[0.6, 0.4]`.
+  - `c: int = 60` — constante de lissage du RRF (`score = Σ weight × 1/(rank + c)`). Plus `c` est grand, plus les rangs profonds comptent.
+  - `id_key: str | None` — clé metadata pour identifier un doc (pour dédupliquer entre retrievers).
+
+- `vectorstore.as_retriever(search_type, search_kwargs)` — convertit un VectorStore en `Retriever`. Paramètres :
+  - `search_type: "similarity" | "mmr" | "similarity_score_threshold"` — `"similarity"` = top-k brut, `"mmr"` = Maximal Marginal Relevance (diversité), `"similarity_score_threshold"` = filtre par score min.
+  - `search_kwargs: dict` — ex. `{"k": 4, "fetch_k": 20, "lambda_mult": 0.5}` (lambda_mult pour MMR : 0 = max diversité, 1 = max pertinence).
+
+- Interface `Retriever.invoke(query: str) → list[Document]` — l'API LangChain standard, consommée par les tools et l'AgentExecutor.
+
 
 📝 Slide 4 : Concept #2 — La boucle ReAct (le détective)
 
@@ -132,6 +146,33 @@ def get_agent_executor(verbose=True, debug=False, memory=None):
 ```
 
 > 💡 **Analogie détective** : Sherlock Holmes ne répond pas à « qui a tué le colonel ? » par une intuition. Il fait : *Thought : « il me faut l'arme »* → *Action : interroge le valet* → *Observation : couteau dans la cuisine* → *Thought : « maintenant le mobile »* → *Action : lit les lettres* → ... → *Final Answer*. ReAct = le détective scripté.
+
+**📚 Dépendances natives utilisées**
+
+- `langchain.agents.create_react_agent(llm, tools, prompt)` — construit un agent ReAct (Runnable qui produit l'output au format ReAct). Paramètres :
+  - `llm: BaseLanguageModel` — le LLM (issu de `get_llm()` d'AT01).
+  - `tools: list[BaseTool]` — la liste des outils utilisables (ici `ALL_TOOLS`).
+  - `prompt: BasePromptTemplate` — doit contenir `{tools}`, `{tool_names}`, `{agent_scratchpad}`, et optionnellement `{chat_history}` pour la mémoire.
+
+- `langchain.hub.pull(repo_name)` — télécharge un prompt depuis le hub LangChain (https://smith.langchain.com/hub).
+  - `repo_name: str` — ex. `"hwchase17/react-chat"` (avec `{chat_history}`) ou `"hwchase17/react"` (sans).
+  - ⚠️ Nécessite une connexion internet ; toujours prévoir un fallback local.
+
+- `langchain.agents.AgentExecutor(...)` — wrapper qui exécute la boucle Thought → Action → Observation. Paramètres :
+  - `agent: Runnable` — l'agent issu de `create_react_agent`.
+  - `tools: list[BaseTool]` — mêmes outils que ceux passés à l'agent.
+  - `verbose: bool` — log la boucle en console (utile en dev, à `False` en prod).
+  - `max_iterations: int = 15` — anti-boucle infinie. 8 est notre sweet spot.
+  - `handle_parsing_errors: bool | str | callable` — `True` = retry gracieux si LLM produit un format mal formé. Sinon crash.
+  - `return_intermediate_steps: bool` — `True` expose la trace `[(AgentAction, observation), ...]` dans le résultat (mode debug).
+  - `memory: BaseMemory | None` — mémoire conversationnelle injectée (voir ci-dessous).
+  - `callbacks: list[BaseCallbackHandler] | None` — handlers de tracing (Langfuse, LangSmith).
+  - `early_stopping_method: "force" | "generate"` — `"force"` (default) stop sec à max_iterations ; `"generate"` laisse le LLM produire une réponse finale même si interrompu.
+
+- `langchain.memory.ConversationBufferWindowMemory(k, memory_key, return_messages, input_key, output_key)` — mémoire de fenêtre glissante. Paramètres :
+  - `k: int = 5` — nombre de tours de conversation à conserver. 6 est notre default.
+  - `memory_key: str` — nom de la variable injectée dans le prompt (ex. `"chat_history"`).
+  - `return_messages: bool` — `True` retourne des `BaseMessage`, `False` un `str` formaté.
 
 
 📝 Slide 5 : Pipeline complet — du message utilisateur à la réponse multi-outils

@@ -63,6 +63,24 @@ def evaluate_strategies(sample_size: int = 20) -> dict:
 
 > 💡 **Piège** — si tu vois `Recall@5 < 0.4`, ce n'est PAS la stratégie de chunking. C'est probablement l'index FAISS qui n'a pas été reconstruit après changement de stratégie. Re-lance `python scripts/build_index.py --strategy=…`.
 
+**📚 Dépendances natives utilisées**
+
+- `requests.post(url, json=..., timeout=..., headers=..., params=...) → Response` — appel HTTP POST côté client. Paramètres :
+  - `url: str` — URL complète de l'endpoint (ex. `"http://localhost:8000/rag/evaluate"`).
+  - `json: dict | None` — corps JSON-encodé. Ajoute automatiquement `Content-Type: application/json`.
+  - `data: dict | str | bytes` — alternative pour form data ou raw bytes.
+  - `timeout: float | tuple[float, float]` — timeout en secondes. `(connect_timeout, read_timeout)` pour différencier.
+  - `headers: dict[str, str]` — headers HTTP custom.
+  - `params: dict` — query string params (ex. `?strategy=fixed&k=4`).
+
+- `Response` (retour de `requests.post`) :
+  - `.status_code: int` — code HTTP (200, 404, 500, etc.). 200 = OK.
+  - `.json() → dict` — parse le body en dict Python. Lève `ValueError` si pas JSON.
+  - `.text: str` — body brut en string.
+  - `.elapsed: timedelta` — durée mesurée côté `requests` (depuis l'envoi de la requête jusqu'à la réception complète).
+
+- `time.time() → float` — timestamp Unix en secondes (avec microsecondes). Pour mesurer une latence client : `t0 = time.time(); ...; elapsed = time.time() - t0`.
+
 
 📝 Slide 4 : Concept #2 — Comparer 3 modes sur les mêmes questions
 
@@ -90,6 +108,15 @@ def compare_modes(questions: list[str]) -> dict:
 | llm_only  | 1-2                | ~150 (court)        | 0.20 (hallucine) |
 | rag_only  | 3-5                | ~300                | 0.85+ (factuel) |
 | agent     | 8-15               | ~500 (avec ReAct)   | 0.80+ (multi-source) |
+
+
+**📚 Dépendances natives utilisées**
+
+- `requests.post(...)` (déjà détaillé en Slide 3) — utilisé ici avec **`timeout=60`** car les modes lents (agent ReAct) peuvent prendre 30 s. Sans timeout, un mode bloqué bloque tout le script.
+
+- `list.append(x)` (built-in Python) — accumule les latences dans `latencies[mode]`. Permet de calculer ensuite mean / median / p95 / p99 via `statistics.mean()`, `statistics.median()`, ou `numpy.percentile(arr, 95)`.
+
+- Pattern dict-de-listes : `results = {"llm_only": [], "rag_only": [], "agent": []}` — structure idéale pour collecter en double boucle (outer = questions, inner = modes), puis itérer par mode pour les stats.
 
 
 📝 Slide 5 : Concept #3 — Tableau récapitulatif Markdown + benchmarks RAFT
@@ -124,6 +151,20 @@ ensemble       0.72   0.85   0.87
   RAG fixed-size  : Recall@5 attendu ~ 0.72  ← OK
   ...
 ```
+
+
+**📚 Dépendances natives utilisées**
+
+- **f-strings Python** avec format mini-language (`f"{val:<12}"` etc.) — directives utiles :
+  - `:<12` — alignement GAUCHE sur 12 caractères (padding à droite).
+  - `:>6` — alignement DROITE sur 6 caractères (padding à gauche).
+  - `:^10` — alignement CENTRÉ sur 10 caractères.
+  - `:.2f` — `float` avec 2 décimales.
+  - `:>6.2f` — combiné : 6 caractères, alignement droite, 2 décimales.
+  - `:,` — séparateur de milliers (ex. `f"{1234567:,}"` → `"1,234,567"`).
+  - `:e` — notation scientifique (ex. `f"{0.0000123:.2e}"` → `"1.23e-05"`).
+
+- Aucun parser Markdown nécessaire : Python natif suffit. La sortie console alignée par f-strings reste lisible dans un `.md` rendu en monospace (GitHub, Notion, Slack).
 
 
 📝 Slide 6 : La grille de décision TCO (à rédiger manuellement)

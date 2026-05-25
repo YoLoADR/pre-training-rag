@@ -60,6 +60,23 @@ raise NotImplementedError("Cellule 11 — voir indices ci-dessous")
 
 > 💡 **Analogie** : QLoRA 4-bit = compresser une encyclopédie HD en JPEG basse qualité. 4× plus léger, presque pas visible à l'œil nu (cas d'usage : tu LIS le contenu, pas un pixel à la fois).
 
+**📚 Dépendances natives utilisées**
+
+- `transformers.BitsAndBytesConfig(...)` — config de quantization (vient de la lib `bitsandbytes`). Paramètres :
+  - `load_in_4bit: bool` — active le chargement en 4 bits. À combiner avec les 3 suivants.
+  - `bnb_4bit_compute_dtype: torch.dtype` — type des CALCULS pendant le training. `torch.float16` sur T4 (T4 ne supporte PAS bfloat16) ; `torch.bfloat16` sur A100/H100.
+  - `bnb_4bit_use_double_quant: bool` — `True` quantize aussi les constantes de quantization → gain ~0.4 bits/param.
+  - `bnb_4bit_quant_type: "nf4" | "fp4"` — `"nf4"` (NormalFloat4) OPTIMAL pour LLM (distribution normale-like des poids).
+
+- `transformers.AutoModelForCausalLM.from_pretrained(name, ...)` — charge un modèle causal. Paramètres clés :
+  - `pretrained_model_name_or_path: str` — nom HuggingFace (`"mistralai/Mistral-7B-Instruct-v0.2"`) ou path local.
+  - `quantization_config: BitsAndBytesConfig | None` — config bnb ci-dessus. Si `None`, charge en FP16/FP32.
+  - `device_map: "auto" | "balanced" | dict` — répartition GPU. `"auto"` = HuggingFace décide.
+  - `trust_remote_code: bool` — `True` autorise l'exécution de code Python custom embarqué dans le repo HF.
+  - `torch_dtype: torch.dtype | "auto"` — type des poids non-quantizés.
+
+- `transformers.AutoTokenizer.from_pretrained(name, trust_remote_code)` — charge le tokenizer. ⚠️ Mistral n'a pas de `pad_token` natif → après chargement : `tokenizer.pad_token = tokenizer.eos_token`.
+
 
 📝 Slide 4 : Concept #2 — LoraConfig (r=8, alpha=16, target Q/V)
 
@@ -93,6 +110,21 @@ raise NotImplementedError("Cellule 13 — voir indices ci-dessous")
 
 > 💡 **Analogie** : LoRA = des **post-its sur les pages clés** d'un livre de 7 000 pages. Le livre reste figé. À l'usage, on lit le livre + les post-its. Les post-its pèsent <50 MB et s'écrivent en 15 min ; réécrire le livre prendrait des semaines et 14 GB.
 
+**📚 Dépendances natives utilisées**
+
+- `peft.prepare_model_for_kbit_training(model)` — prépare un modèle quantizé pour le training : active le gradient checkpointing (recalcul des activations en backward → économise VRAM contre temps), désactive `model.config.use_cache`, gèle les poids quantizés.
+
+- `peft.LoraConfig(...)` — configuration de l'adaptation LoRA. Paramètres :
+  - `r: int` — RANG des matrices A (in×r) et B (r×out) qui remplacent l'update ΔW. Plus `r` est grand, plus on a de capacité ; plus on entraîne de params. r=8 sweet spot adaptation style/ton.
+  - `lora_alpha: int` — facteur d'échelle des updates LoRA. Forward : `output = W @ x + (alpha/r) × B @ A @ x`. Règle de pouce : `alpha = 2 × r`.
+  - `target_modules: list[str] | str` — modules à adapter. Pour attention : `["q_proj", "v_proj"]` (Q+V suffit à 95 % du gain). Pour adaptation complète : `"all-linear"`.
+  - `lora_dropout: float` — dropout sur les updates LoRA (régularisation). 0.05 typique.
+  - `bias: "none" | "all" | "lora_only"` — `"none"` = on ne touche pas aux biais (économie params).
+  - `task_type: "CAUSAL_LM" | "SEQ_CLS" | "SEQ_2_SEQ_LM"` — détermine quelle classe PEFT instancier.
+  - `modules_to_save: list[str] | None` — modules ENTIÈREMENT entraînés (pas LoRA-isés). Utile pour réajuster `lm_head` ou `embed_tokens`.
+
+- `peft.get_peft_model(model, lora_config) → PeftModel` — applique LoRA : gèle les poids originaux et ajoute A/B entraînables. Le modèle retourné s'utilise comme un transformer normal mais seuls A/B sont mis à jour pendant le `.backward()`.
+
 
 📝 Slide 5 : Concept #3 — TrainingArguments + SFTTrainer + MLFlow
 
@@ -118,6 +150,36 @@ raise NotImplementedError("Cellule 15 — voir indices ci-dessous")
 **Indice fort** — Hyperparamètres recommandés T4 : `num_train_epochs=3`, `per_device_train_batch_size=4`, `gradient_accumulation_steps=4` (batch effectif = 16), `learning_rate=2e-4`, `warmup_steps=50`, `fp16=True`, `optim='paged_adamw_32bit'` (économise ~3 GB VRAM), `lr_scheduler_type='cosine'`, `eval_strategy='steps', eval_steps=50`, `load_best_model_at_end=True`. ⚠️ Si `loss=NaN` au 1er step → divise `learning_rate` par 2.
 
 > 💡 **Critère de succès** : loss train ≤ 1.5 après 3 epochs ; adapter < 50 MB sur disque ; ROUGE-L sur 10 questions test > ROUGE-L du modèle base.
+
+**📚 Dépendances natives utilisées**
+
+- `transformers.TrainingArguments(...)` — config d'entraînement HuggingFace. Paramètres clés :
+  - `output_dir: str` — où sauver checkpoints + tokenizer + adapter.
+  - `num_train_epochs: float` — nombre d'epochs. 3 pour LoRA sur petit dataset.
+  - `per_device_train_batch_size: int` — batch par GPU. 4 sur T4 pour 7B QLoRA.
+  - `gradient_accumulation_steps: int` — accumule N forwards avant un backward. Batch effectif = `batch_size × gradient_accumulation × num_devices`.
+  - `learning_rate: float` — LR initial. `2e-4` standard LoRA (10-100× plus haut qu'un full FT).
+  - `warmup_steps: int` — montée linéaire du LR sur N steps avant le scheduler. 50 typique.
+  - `fp16: bool` / `bf16: bool` — calculs en demi-précision. T4 → `fp16=True` ; A100+ → `bf16=True`.
+  - `optim: "adamw_torch" | "paged_adamw_32bit" | …` — `paged_adamw_32bit` économise ~3 GB VRAM en swappant les états AdamW (m, v) CPU↔GPU.
+  - `lr_scheduler_type: "linear" | "cosine" | "constant"` — `"cosine"` recommandé.
+  - `eval_strategy: "no" | "steps" | "epoch"` + `eval_steps: int` — fréquence des évaluations.
+  - `save_steps: int` + `save_total_limit: int` — fréquence des checkpoints + nombre max conservés.
+  - `load_best_model_at_end: bool` — restore le checkpoint avec la val_loss min à la fin.
+  - `report_to: "none" | "tensorboard" | "wandb" | "mlflow"` — destination des logs auto.
+
+- `trl.SFTTrainer(...)` — wrapper spécialisé Supervised Fine-Tuning. Paramètres :
+  - `model: PreTrainedModel` — le modèle PEFT-LoRA.
+  - `train_dataset` / `eval_dataset: Dataset` — datasets HuggingFace.
+  - `peft_config: LoraConfig | None` — re-passé pour générer un adapter propre à la fin.
+  - `dataset_text_field: str` — nom du champ texte dans le dataset (ex. `"text"`).
+  - `max_seq_length: int` — longueur max après tokenization. Tronque les exemples plus longs.
+  - `tokenizer: PreTrainedTokenizer` — le tokenizer associé.
+  - `args: TrainingArguments` — la config ci-dessus.
+
+- `mlflow.set_tracking_uri(uri)` + `mlflow.set_experiment(name)` — initialisent le store local Colab (ex. `'file:///content/mlruns'`).
+- `mlflow.start_run(run_name)` — context manager pour un run.
+- `mlflow.log_params(dict)` + `mlflow.log_metrics(dict)` — tracking des hyperparams et métriques.
 
 
 📝 Slide 6 : Pipeline complet — du dataset au modèle FT déployable

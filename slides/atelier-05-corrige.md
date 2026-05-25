@@ -87,6 +87,22 @@ async def _call_rag_only(message: str) -> dict:
 
 > 💡 **Analogie** : `run_in_executor` = passer une commande lente au cuisinier pendant que le serveur (event loop) continue à prendre les commandes des autres clients. Sans ça, tout s'arrête pendant que le plat cuit.
 
+**📚 Dépendances natives utilisées**
+
+- `asyncio.get_event_loop() → AbstractEventLoop` — récupère la boucle asyncio active (celle de FastAPI dans notre cas).
+
+- `loop.run_in_executor(executor, func, *args) → Future` — exécute une fonction **synchrone** dans un pool de threads sans bloquer l'event loop. Paramètres :
+  - `executor: Executor | None` — pool à utiliser. `None` = pool de threads par défaut (`ThreadPoolExecutor`).
+  - `func: callable` — fonction sync à exécuter.
+  - `*args` — arguments positionnels passés à `func`. ⚠️ Pas de kwargs natifs — utilise `functools.partial` si besoin.
+  - Retour : `Future` qu'on `await`.
+
+- LCEL pipe `|` (LangChain Expression Language) — chaîne `template | llm`. Le résultat est un `Runnable`. Méthodes :
+  - `Runnable.invoke(input, config=None) → Output` — exécution synchrone. Retourne le résultat final.
+  - `Runnable.ainvoke(input, config=None)` — version async native (alternative à `run_in_executor` pour les `Runnable` qui l'implémentent).
+
+- `chain.invoke({"context": "...", "question": "..."}) → AIMessage` — substitue les variables, appelle le LLM, retourne un `AIMessage` avec `.content: str` et `.usage_metadata: dict` (input/output/cache_read tokens).
+
 
 📝 Slide 4 : Concept #2 — `_call_agent` (avec intermediate_steps pour debug)
 
@@ -135,6 +151,21 @@ async def _call_agent(message: str, session_id: str, debug: bool = False) -> dic
 
     return {"response": response_text, "token_usage": None, "sources": sources, "steps": steps_log}
 ```
+
+
+**📚 Dépendances natives utilisées**
+
+- `AgentExecutor.invoke(input, config=None) → dict` — exécute la boucle ReAct. Clés de retour :
+  - `output: str` — la réponse finale (toujours présente).
+  - `input: str` — l'input original (echo).
+  - `intermediate_steps: list[tuple[AgentAction, str]]` — SI `return_intermediate_steps=True` côté AgentExecutor.
+
+- `langchain_core.agents.AgentAction(tool, tool_input, log)` — dataclass produite par l'agent à chaque step :
+  - `tool: str` — nom de l'outil appelé (ex. `"search_home_docs"`).
+  - `tool_input: str | dict` — input passé à l'outil.
+  - `log: str` — log complet de l'étape (Thought + Action + Action Input bruts du LLM).
+
+- Format de `intermediate_steps` : `[(AgentAction, observation_str), ...]` — chaque tuple = (décision de l'agent, sortie de l'outil). Utile pour tracer/débugger côté API ou afficher dans une UI.
 
 
 📝 Slide 5 : Concept #3 — `/rag/retrieve` (transparence pédagogique)
@@ -198,6 +229,24 @@ curl -X POST http://localhost:8000/rag/retrieve \
 ```
 
 > 💡 **Cas d'usage debug** : lance `/rag/retrieve` AVANT `/chat` pour voir CE QUE le RAG retourne, AVANT que le LLM le résume. Boucle de feedback visuelle pour comprendre où ça coince quand une réponse part en hallucination.
+
+
+**📚 Dépendances natives utilisées**
+
+- `fastapi.APIRouter` + `@router.post(path, response_model=...)` — décorateur d'endpoint. Paramètres clés :
+  - `path: str` — chemin relatif (ex. `"/retrieve"`).
+  - `response_model: type[BaseModel] | None` — modèle Pydantic de retour. Si fourni, FastAPI valide ET génère la doc OpenAPI.
+  - `status_code: int` — code HTTP par défaut (200 pour POST avec body).
+  - `tags: list[str]` — groupes dans la doc Swagger.
+
+- `fastapi.HTTPException(status_code, detail, headers)` — exception qui produit une réponse HTTP propre. Paramètres :
+  - `status_code: int` — 400 (bad request), 404 (not found), 422 (validation), 500 (server error), etc.
+  - `detail: str | dict | list` — message renvoyé au client (JSON sérialisé).
+  - `headers: dict | None` — headers HTTP custom (ex. `Retry-After: 60`).
+
+- `pydantic.BaseModel` — classe parent de tous les modèles Pydantic. Validation automatique au runtime.
+  - `model.model_dump(mode='python' | 'json', exclude_none=False) → dict` — sérialise en dict (Pydantic v2 ; ancien `.dict()` en v1).
+  - `Field(default, description, ge=..., le=..., min_length=..., max_length=...)` — métadonnées par champ : default, doc, validation min/max.
 
 
 📝 Slide 6 : Pipeline HTTP complet — du curl à la réponse

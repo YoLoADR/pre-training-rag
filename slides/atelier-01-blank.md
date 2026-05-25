@@ -59,6 +59,21 @@ def get_llm(
 
 ⚠️ **Piège** — si tu oublies de tester `config.ANTHROPIC_API_KEY` avant d'instancier ChatAnthropic, le crash arrive 2 secondes plus tard avec un message obscur. Un `if not key: raise ValueError(...)` explicite te fait gagner du debug.
 
+**📚 Dépendances natives utilisées**
+
+- `langchain_anthropic.ChatAnthropic(...)` — client Claude pour LangChain. Paramètres clés :
+  - `model: str` — nom du modèle Anthropic (ex. `"claude-sonnet-4-5"`, `"claude-haiku-4-5"`).
+  - `api_key: str` — clé API Anthropic (commence par `sk-ant-`). Si absente → erreur authentification au 1er appel.
+  - `temperature: float ∈ [0, 1]` — 0 = déterministe (mêmes inputs → même output), 1 = créatif.
+  - `max_tokens: int` — plafond de tokens en sortie. 1024 tokens ≈ 750 mots.
+  - `streaming: bool` — si `True`, expose un itérateur token-par-token (utile pour SSE en AT05). Par défaut `False`.
+
+- `langchain_ollama.ChatOllama(...)` — client Ollama local. Paramètres clés :
+  - `base_url: str` — URL du serveur Ollama (ex. `"http://localhost:11434"`).
+  - `model: str` — nom du modèle installé localement (ex. `"mistral:7b-instruct"`). À puller avant : `ollama pull <model>`.
+  - `temperature: float` — idem ChatAnthropic.
+  - ⚠️ `num_predict: int` — **équivalent de `max_tokens` mais nommé différemment**. C'est le piège #1 de l'atelier.
+
 
 📝 Slide 4 : Concept #2 — Le system prompt (fiche de poste du LLM)
 
@@ -114,6 +129,16 @@ result = chain.invoke({"context": chunks_str, "question": user_input})
 ```
 
 > 💡 **Analogie** : un template = un FORMULAIRE à trous. `RAG_QA_TEMPLATE` = formulaire « question avec dossier joint », `BARE_LLM_TEMPLATE` = formulaire « question simple ». Tu remplis les trous au moment d'envoyer.
+
+**📚 Dépendances natives utilisées**
+
+- `langchain_core.prompts.ChatPromptTemplate.from_messages(messages)` — construit un template à partir d'une liste de messages. Paramètre :
+  - `messages: list[tuple[str, str] | MessagesPlaceholder]` — chaque tuple = `(role, contenu)`. Rôles valides : `"system"`, `"human"`, `"ai"`, `"placeholder"`. Variables dans le contenu : accolades simples `{nom}` (substituées au runtime via `.invoke({"nom": "..."})`).
+
+- `template.invoke(variables)` — substitue les variables et retourne un `PromptValue` prêt pour le LLM.
+  - `variables: dict[str, Any]` — dict des substitutions (ex. `{"context": "...", "question": "..."}`). Une variable manquante = `KeyError` explicite.
+
+- LCEL pipe `|` (`langchain_core.runnables`) — opérateur qui chaîne `template | llm | parser`. Chaque maillon doit être un `Runnable`. Le résultat = un nouveau `Runnable` qu'on appelle avec `.invoke({})` pour exécuter toute la chaîne d'un coup.
 
 
 📝 Slide 6 : Récap — démarrer sur la branche `student/01-llm-baseline`

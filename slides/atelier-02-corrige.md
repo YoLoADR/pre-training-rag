@@ -70,6 +70,19 @@ def chunk_recursive(documents, chunk_size=512, chunk_overlap=50):
 
 ⚠️ **Piège fréquent** — passer un seul séparateur (`separator="\n"`) au lieu d'une LISTE : c'est ce que fait `CharacterTextSplitter` (la stratégie *fixed*). Sans la liste, pas de récursivité.
 
+**📚 Dépendances natives utilisées**
+
+- `langchain_text_splitters.RecursiveCharacterTextSplitter(...)` — splitter qui tente ses séparateurs dans l'ordre du plus large au plus fin. Paramètres :
+  - `chunk_size: int` — taille cible du chunk en **caractères** (pas tokens). 500-1500 typique pour FR.
+  - `chunk_overlap: int` — chevauchement entre chunks consécutifs (10-20 % du `chunk_size`).
+  - `separators: list[str]` — liste ORDONNÉE. Le premier séparateur qui produit des chunks ≤ `chunk_size` gagne. Default LangChain : `["\n\n", "\n", " ", ""]`.
+  - `length_function: callable` — fonction qui mesure la taille. Default `len` (caractères). Pour mesurer en tokens : `lambda x: len(tokenizer.encode(x))`.
+  - `is_separator_regex: bool` — `False` par défaut. Si `True`, les séparateurs sont compilés en regex.
+  - `keep_separator: bool` — `True` par défaut. Conserve le séparateur dans le chunk (utile pour ponctuation).
+
+- `splitter.split_documents(documents)` — prend une `list[Document]` et retourne une `list[Document]` chunkée **AVEC métadonnées préservées** (`source`, `page`).
+  - À distinguer de `.split_text(str)` qui prend un `str` et retourne `list[str]` — perd les metadata. Toujours préférer `split_documents` quand on part de `Document`.
+
 
 📝 Slide 4 : Concept #2 — Embeddings (le code-barres sémantique)
 
@@ -101,6 +114,19 @@ def get_embeddings():
 | « le bail interdit les animaux » | `[-0.12, 0.71, 0.03, ...]` ← très différent |
 
 > 💡 **Analogie GPS** : un embedding = coordonnées GPS du texte dans un espace à 384 dimensions. Deux concepts proches sont géographiquement voisins.
+
+**📚 Dépendances natives utilisées**
+
+- `langchain_community.embeddings.FastEmbedEmbeddings(...)` — wrapper LangChain autour de `fastembed` (ONNX, CPU). Paramètres :
+  - `model_name: str` — modèle d'embedding (ex. `"sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"`). Téléchargé au 1er usage dans `~/.cache/fastembed/`.
+  - `max_length: int` — tronque les textes plus longs (default 512). Si tu chunkes à 500 chars, c'est confortable.
+  - `cache_dir: str | None` — répertoire de cache du modèle. Default `~/.cache/fastembed/`.
+  - `threads: int | None` — parallélisation CPU. Default = nb de cœurs.
+  - `doc_embed_type: "default" | "passage"` — `"passage"` ajoute un préfixe spécifique pour certains modèles asymétriques query/passage.
+
+- Interface LangChain `Embeddings` (méthodes exposées) :
+  - `.embed_documents(texts: list[str]) → list[list[float]]` — embedde N textes en N vecteurs (appelé par FAISS à l'indexation).
+  - `.embed_query(text: str) → list[float]` — embedde une seule query (appelé au runtime par `similarity_search`).
 
 
 📝 Slide 5 : Concept #3 — Construire un index FAISS
@@ -141,6 +167,26 @@ def build_faiss_index(documents, save_path=None, force_rebuild=False):
 > 💡 **Analogie** : FAISS = la BIBLIOTHÈQUE organisée par sens (rayons thématiques, fiches), vs lecture séquentielle (parcourir 10 000 livres un par un).
 
 ⚠️ **Piège LangChain ≥ 0.1** — `FAISS.load_local()` exige désormais `allow_dangerous_deserialization=True` (FAISS utilise pickle). C'est OK ici car on charge NOTRE propre fichier, jamais celui d'un tiers.
+
+**📚 Dépendances natives utilisées**
+
+- `langchain_community.vectorstores.FAISS.from_documents(documents, embedding)` — méthode de classe qui bâtit un index FAISS depuis une liste de Documents + un embedder. Paramètres :
+  - `documents: list[Document]` — les chunks à indexer.
+  - `embedding: Embeddings` — l'objet retourné par `get_embeddings()`.
+  - `**kwargs` — options FAISS bas-niveau ; `distance_strategy="COSINE"` par défaut (le standard du RAG).
+
+- `vectorstore.save_local(folder_path, index_name="index")` — persiste l'index sur disque. Produit 2 fichiers : `index.faiss` (binaire FAISS) + `index.pkl` (mapping pickle ID FAISS → Document).
+
+- `FAISS.load_local(folder_path, embeddings, index_name="index", allow_dangerous_deserialization=False)` — recharge depuis disque. Paramètres :
+  - `folder_path: str` — où trouver les 2 fichiers.
+  - `embeddings: Embeddings` — embedder à attacher (doit être **identique** à celui qui a indexé).
+  - ⚠️ `allow_dangerous_deserialization: bool` — **doit être `True`** depuis LangChain 0.1. OK pour ton propre index, jamais pour un index tiers (pickle = code arbitraire exécutable).
+
+- `vectorstore.similarity_search(query, k=4, filter=None, fetch_k=20)` — récupère les k chunks les plus proches. Paramètres :
+  - `query: str` — la question (sera embeddée via `.embed_query`).
+  - `k: int` — nombre de chunks retournés. 4 = bon compromis contexte/coût.
+  - `filter: dict | None` — filtre sur metadata (ex. `{"source": "notice_chaudiere.pdf"}`). FAISS ne filtre pas efficacement — préférer ChromaDB en AT03.
+  - `fetch_k: int` — nombre de candidats à fetcher AVANT filtrage (default 20).
 
 
 📝 Slide 6 : Pipeline complet — du PDF à la réponse citée
