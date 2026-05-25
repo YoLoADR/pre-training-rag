@@ -197,7 +197,7 @@ curl -X POST http://localhost:8000/rag/retrieve \
 #                 "char_count":487}, ...]}
 ```
 
-> 💡 **Cas d'usage formation** : pendant la démo, on lance `/rag/retrieve` AVANT `/chat` pour montrer aux élèves QUE le RAG retourne, AVANT que le LLM le résume. Boucle de feedback visuelle.
+> 💡 **Cas d'usage debug** : lance `/rag/retrieve` AVANT `/chat` pour voir CE QUE le RAG retourne, AVANT que le LLM le résume. Boucle de feedback visuelle pour comprendre où ça coince quand une réponse part en hallucination.
 
 
 📝 Slide 6 : Pipeline HTTP complet — du curl à la réponse

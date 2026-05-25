@@ -12,14 +12,14 @@ L'Atelier 01 a chiffré que le LLM seul invente ses réponses sur les documents 
 | Index FAISS (À CODER) | Stocke les vecteurs dans un index ANN | Sans index, comparer la query à 1000 chunks coûte 1000 multiplications. Avec FAISS : O(log n). |
 | Évaluation | Recall@5 + Faithfulness sur 5 questions étalons | La cible **0.80 / 0.85** prouve que le système est utilisable en production |
 
-> 💡 **Branche élève** : `git checkout student/02-rag-simple` dans `training-rag`. Solution : `git diff student/02-rag-simple atelier/02-rag-simple -- <fichier>`.
+> 💡 **Branche élève** : `git checkout student/02-rag-simple`. Bloqué > 15 min : `git diff student/02-rag-simple atelier/02-rag-simple -- <fichier>`.
 
 
 📝 Slide 2 : État initial vs ce qu'on va construire
 
 POURQUOI séparer plomberie et concept pédagogique ?
 
-L'atelier dure 3h30. Si l'élève recode tout (loader PDF + chunking + embedding + FAISS + retriever), il dépasse de 2h. La règle de blanking : on garde corrigés les éléments qui ne portent PAS le concept central, et on blanke uniquement ce qui matérialise le concept RAG. Résultat : 2 fichiers Python (~6 fonctions au total) ciblés.
+L'atelier dure 3h30. Si tu recodes tout (loader PDF + chunking + embedding + FAISS + retriever), tu dépasses de 2h. La règle de blanking : on garde corrigés les éléments qui ne portent PAS le concept central, et on blanke uniquement ce qui matérialise le concept RAG. Résultat : 2 fichiers Python (~6 fonctions au total) ciblés.
 
 | Fichier | État | Pourquoi |
 |---------|------|----------|
@@ -27,8 +27,8 @@ L'atelier dure 3h30. Si l'élève recode tout (loader PDF + chunking + embedding
 | `homebutler/rag/ingestion.py` → `load_pdf`, `load_pdf_with_metadata`, `ingest_all_documents` | ✅ Plomberie fournie | Lecture PDF + orchestration — pas le concept RAG |
 | `homebutler/rag/ingestion.py` → `chunk_fixed_size`, `chunk_recursive`, `chunk_semantic` | 🛠️ **À CODER** | Concept central : stratégies de découpage |
 | `homebutler/rag/vectorstore_faiss.py` → `get_embeddings`, `build_faiss_index`, `load_faiss_index` | 🛠️ **À CODER** | Concept central : embeddings + vector store |
-| `ateliers/atelier-02-rag-simple/exercice.py` | ✅ Cadré par TODOs existants | Wrapper qui orchestre les briques codées par l'élève |
-| `ateliers/atelier-02-rag-simple/evaluate_rag.py` | ✅ LLM-judge fourni clé en main | Évaluation Faithfulness — pas du scope élève |
+| `ateliers/atelier-02-rag-simple/exercice.py` | ✅ Cadré par TODOs existants | Wrapper qui orchestre les briques que tu codes |
+| `ateliers/atelier-02-rag-simple/evaluate_rag.py` | ✅ LLM-judge fourni clé en main | Évaluation Faithfulness — pas du scope |
 
 > 💡 Les fonctions à coder ont **deux niveaux d'indices** dans leur docstring : *léger* (« quel objet chercher ») et *fort* (« quels arguments / quels appels »). Aucun indice ne révèle directement la solution.
 
@@ -39,60 +39,49 @@ POURQUOI le chunking récursif est la stratégie par défaut ?
 
 Un PDF est rarement uniforme : des paragraphes longs, des listes, des titres. Le chunking *fixed-size* (couper tous les 512 caractères) tronque souvent une phrase au milieu d'un concept clé. Le *récursif* tente de couper sur les séparateurs naturels du plus large au plus fin : paragraphe → ligne → phrase → mot. Résultat : un chunk reste sémantiquement cohérent.
 
-**Évolution à apporter** (vue corrigée) :
+**Signature à compléter** :
 
 ```python
-# AVANT (blank dans student/02) : la fonction lève NotImplementedError
-# APRÈS (atelier/02) :
-
 def chunk_recursive(documents, chunk_size=512, chunk_overlap=50):
-    # AVANTAGE pédagogique : le SPLITTER RECURSIF essaie d'abord le séparateur
-    # le plus "large" (paragraphe \n\n), puis plus fin (ligne \n), puis encore
-    # plus fin (phrase via . ! ?), puis espace, puis vide. Au moment où ça tient
-    # dans chunk_size, il s'arrête. Conséquence : on coupe TRÈS rarement au
-    # milieu d'une phrase utile.
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=chunk_size,        # ~500 caractères : assez gros pour porter
-                                       #   une idée, assez petit pour 4 chunks/réponse
-        chunk_overlap=chunk_overlap,  # ~10-20 % du chunk_size — un overlap de 50
-                                       #   préserve les phrases coupées entre 2 chunks
-        separators=["\n\n", "\n", ".", "!", "?", " ", ""],
-        #  ↑ ORDRE CRITIQUE : du plus large au plus fin. LangChain essaie ces
-        #    séparateurs DANS CET ORDRE — c'est la "récursivité" du nom.
-        length_function=len,           # on mesure en caractères, pas en tokens
+    """Découpe une liste de Documents en chunks ~512 caractères en respectant
+    les séparateurs naturels (paragraphe → ligne → phrase → espace).
+    """
+    raise NotImplementedError(
+        "Atelier 02 § 2.2 — chunking récursif. "
+        "Solution finale : git diff student/02-rag-simple atelier/02-rag-simple -- homebutler/rag/ingestion.py"
     )
-    return splitter.split_documents(documents)
-    #  ↑ .split_documents() préserve les métadonnées (source, page) sur
-    #    chaque chunk produit — indispensable pour citer la source plus tard.
 ```
+
+**Indice léger** — LangChain expose une classe dont le nom commence par `Recursive…Splitter`. Le découpage « récursif » signifie : essayer le séparateur le plus large (paragraphe `\n\n`), puis plus fin (ligne `\n`), puis plus fin encore (phrase `.` `!` `?`), puis espace.
+
+**Indice fort** — Instancie le splitter avec `chunk_size`, `chunk_overlap`, et **une liste** de séparateurs ordonnés du plus large au plus fin : `["\n\n", "\n", ".", "!", "?", " ", ""]`. Puis appelle `.split_documents(documents)` — cette méthode (et pas `.split_text()`) préserve les métadonnées (source, page) sur chaque chunk produit.
 
 > 💡 **Analogie cuisine** : tu coupes un gâteau pour servir 8 parts. Tu commences par couper en quart (séparateur large), puis en huitième (plus fin). Tu ne coupes pas au hasard tous les 5 cm — tu respectes les marques naturelles.
 
-⚠️ **Piège fréquent** — passer un seul séparateur (`separator="\n"`) au lieu d'une LISTE : c'est ce que fait `CharacterTextSplitter` (la stratégie *fixed*). Sans la liste, pas de récursivité.
+⚠️ **Piège fréquent** — passer un seul `separator="\n"` au lieu d'une LISTE : c'est ce que fait `CharacterTextSplitter` (la stratégie *fixed*). Sans la liste, pas de récursivité.
 
 
 📝 Slide 4 : Concept #2 — Embeddings (le code-barres sémantique)
 
 POURQUOI on transforme un texte en 384 nombres ?
 
-Un LLM ne sait pas comparer « chaudière à condensation » et « ballon thermodynamique » par leur SENS — il sait seulement comparer caractère par caractère. L'embedding résout ce problème : chaque texte devient un vecteur de N dimensions tel que deux textes proches sémantiquement aient des vecteurs proches géométriquement (cosinus élevé). On peut alors faire une recherche par proximité.
+Un LLM ne sait pas comparer « chaudière à condensation » et « ballon thermodynamique » par leur SENS — il sait seulement comparer caractère par caractère. L'embedding résout ce problème : chaque texte devient un vecteur de N dimensions tel que deux textes proches sémantiquement aient des vecteurs proches géométriquement (cosinus élevé).
 
-**Évolution à apporter** :
+**Signature à compléter** :
 
 ```python
-# AVANT : NotImplementedError
-# APRÈS :
-
 EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-# AVANTAGE : modèle MULTILINGUE (FR + EN + autres) — important pour HomeButler
-# qui mélange du français bail et de l'anglais technique. Modèle quantisé ONNX :
-# pas besoin de torch ni de GPU, tourne en CPU sur Mac M1, ~300 MB de cache.
+# TODO (indice : ce modèle est multilingue FR+EN, quantisé ONNX, ~300 MB de cache,
+#                ne nécessite ni torch ni GPU)
 
 def get_embeddings():
-    # Une seule ligne. On instancie le modèle, FastEmbed le télécharge la
-    # première fois dans ~/.cache/fastembed/ puis le réutilise.
-    return FastEmbedEmbeddings(model_name=EMBEDDING_MODEL)
+    """Retourne un objet embedder LangChain prêt à être passé à FAISS.from_documents."""
+    raise NotImplementedError(...)
 ```
+
+**Indice léger** — Le projet utilise FastEmbed (lib légère, ONNX, CPU-friendly). LangChain expose un wrapper dont le nom commence par `FastEmbed…`.
+
+**Indice fort** — Une seule ligne suffit : `return FastEmbedEmbeddings(model_name=EMBEDDING_MODEL)`. FastEmbed télécharge le modèle au premier appel dans `~/.cache/fastembed/`, puis le réutilise.
 
 | Texte | Vecteur (extrait des 384 dimensions) |
 |-------|--------------------------------------|
@@ -107,45 +96,30 @@ def get_embeddings():
 
 POURQUOI FAISS plutôt qu'une boucle Python qui compare tous les chunks ?
 
-Naïvement, retrouver les 4 chunks les plus proches d'une question revient à comparer son embedding à TOUS les chunks (1000 multiplications de vecteurs 384-D pour 1000 chunks). À chaque requête. FAISS (Facebook AI Similarity Search) précompile un index qui retrouve les voisins en quelques millisecondes via des structures arborescentes (LSH, IVF, HNSW). Sur 10 000 chunks : ~1 ms au lieu de 200 ms.
+Naïvement, retrouver les 4 chunks les plus proches d'une question revient à comparer son embedding à TOUS les chunks (1000 multiplications de vecteurs 384-D pour 1000 chunks). À chaque requête. FAISS précompile un index qui retrouve les voisins en quelques millisecondes via des structures arborescentes. Sur 10 000 chunks : ~1 ms au lieu de 200 ms.
 
-**Évolution à apporter** :
+**Signature à compléter** :
 
 ```python
-# AVANT : NotImplementedError
-# APRÈS :
-
 def build_faiss_index(documents, save_path=None, force_rebuild=False):
-    path = save_path or config.FAISS_PATH
-
-    # AVANTAGE : on RECHARGE si l'index existe — pas besoin de re-vectoriser
-    # toutes les pages à chaque démarrage de l'API. Gain : 30 s → instantané.
-    if os.path.exists(path) and not force_rebuild:
-        print(f"  Index FAISS existant chargé depuis {path}")
-        return load_faiss_index(path)
-
-    # Sinon on construit : `FAISS.from_documents` calcule l'embedding de chaque
-    # chunk via `embeddings.embed_documents(...)` puis insère dans l'index.
-    # Similarité par défaut = cosinus normalisé (le standard du RAG).
-    print(f"  Construction de l'index FAISS ({len(documents)} chunks)...")
-    embeddings = get_embeddings()
-    vectorstore = FAISS.from_documents(documents, embeddings)
-
-    # IMPORTANT : on sauve sur disque. L'index FAISS = 2 fichiers binaires
-    # (.faiss + .pkl). Sans save_local, l'index serait perdu à chaque restart.
-    vectorstore.save_local(path)
-    print(f"  ✓ Index FAISS sauvegardé dans {path}")
-    return vectorstore
+    """Construit un index FAISS à partir d'une liste de Document chunkés.
+    Recharge l'index existant si déjà sur disque (sauf si force_rebuild=True).
+    """
+    raise NotImplementedError(...)
 ```
+
+**Indice léger** — LangChain expose un constructeur de classe (commence par `FAISS.from_...`) pour bâtir un index directement à partir d'une liste de Documents — pas besoin d'instancier un index vide puis d'appeler `.add_documents()`. L'embedder vient de `get_embeddings()` que tu as déjà écrit.
+
+**Indice fort** — Vérifie d'abord si `save_path` existe et que `force_rebuild` est `False` → recharge via `load_faiss_index(save_path)`. Sinon : `vectorstore = FAISS.from_documents(documents, get_embeddings())` puis `vectorstore.save_local(save_path)` pour persister. La similarité par défaut = cosinus normalisé (le standard du RAG).
 
 > 💡 **Analogie** : FAISS = la BIBLIOTHÈQUE organisée par sens (rayons thématiques, fiches), vs lecture séquentielle (parcourir 10 000 livres un par un).
 
-⚠️ **Piège LangChain ≥ 0.1** — `FAISS.load_local()` exige désormais `allow_dangerous_deserialization=True` (FAISS utilise pickle). C'est OK ici car on charge NOTRE propre fichier, jamais celui d'un tiers.
+⚠️ **Piège LangChain ≥ 0.1** — `FAISS.load_local()` exige `allow_dangerous_deserialization=True` (FAISS utilise pickle). C'est OK ici car on charge ton propre fichier, jamais celui d'un tiers.
 
 
 📝 Slide 6 : Pipeline complet — du PDF à la réponse citée
 
-POURQUOI vue d'ensemble avant de se lancer ?
+POURQUOI vue d'ensemble avant de te lancer ?
 
 L'orchestration `ingest_all_documents` (déjà fournie) appelle tes 3 fonctions dans l'ordre : chargement → chunking → indexation. Le retriever (déjà câblé dans `exercice.py` via `similarity_search`) appelle l'index FAISS. Le LLM (AT01) compose la réponse en citant la source extraite des métadonnées des chunks.
 
@@ -171,7 +145,7 @@ FAISS index sauvegardé sur disque
 **Critère de succès** (commande à lancer) :
 ```bash
 python ateliers/atelier-02-rag-simple/evaluate_rag.py
-# Cible :  Recall@5 ≥ 0.80  ET  Faithfulness ≥ 0.85
+# 🎯 Cible :  Recall@5 ≥ 0.80  ET  Faithfulness ≥ 0.85
 ```
 
 > 💡 Si tu n'atteins pas la cible :
@@ -211,4 +185,4 @@ python ateliers/atelier-02-rag-simple/evaluate_rag.py   # 🎯 Recall@5 ≥ 0.80
 git diff student/02-rag-simple atelier/02-rag-simple -- homebutler/rag/ingestion.py
 ```
 
-> 💡 **Règle d'or** : si tu peux **expliquer ton code à voix haute** au formateur (« j'ai choisi chunk_overlap=50 parce que… »), tu as compris. Si tu ne peux que **lire ton code**, retourne au carnet de bord.
+> 💡 **Règle d'or** : si tu peux **expliquer ton code à voix haute** (« j'ai choisi chunk_overlap=50 parce que… »), tu as compris. Si tu ne peux que **lire ton code**, retourne au carnet de bord.

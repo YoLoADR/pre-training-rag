@@ -2,7 +2,7 @@
 
 POURQUOI clôturer la formation par un atelier d'évaluation ?
 
-Après 5 ateliers à construire, l'élève a un agent fonctionnel. Mais devant un comité ou un client, la VRAIE question est : « RAG ou Fine-Tuning, ou les deux (RAFT) ? combien ça coûte, combien c'est lent, combien c'est juste ? ». Cet atelier produit un TABLEAU MARKDOWN signé avec Recall@k, latence et grille décision TCO pour 3 cas d'usage métier. Sans chiffres, pas d'argument.
+Après 5 ateliers à construire, tu as un agent fonctionnel. Mais devant un comité ou un client, la VRAIE question est : « RAG ou Fine-Tuning, ou les deux (RAFT) ? combien ça coûte, combien c'est lent, combien c'est juste ? ». Cet atelier produit un TABLEAU MARKDOWN signé avec Recall@k, latence et grille décision TCO pour 3 cas d'usage métier. Sans chiffres, pas d'argument.
 
 | Bloc | Ce qu'il fait | Pourquoi c'est nécessaire |
 |------|---------------|---------------------------|
@@ -10,7 +10,7 @@ Après 5 ateliers à construire, l'élève a un agent fonctionnel. Mais devant u
 | `evaluate_strategies()` (À CODER TODO 2) | POST `/rag/evaluate` × 3 stratégies de chunking | Compare fixed / recursive / ensemble |
 | `compare_modes()` (À CODER TODO 3) | POST `/chat` × 5 questions × 3 modes | Compare llm_only / rag_only / agent |
 | `show_latency_summary()` (FOURNI) | mean + median par mode | Latence = critère TCO majeur |
-| `show_summary()` (À CODER TODO 5) | Tableau Markdown + benchmarks RAFT 2024 | Le livrable visuel pour le comité |
+| `show_summary()` (À CODER TODO 5) | Tableau Markdown + benchmarks RAFT 2024 | Le livrable visuel |
 | `grille_decision.md` | À COMPLÉTER manuellement (rédaction) | Recommandation argumentée par cas d'usage |
 
 > 💡 **Branche élève** : `git checkout student/06-finetune-vs-rag`. Particularité : nécessite `ENABLE_COMPARE_ROUTES=true` pour activer `/rag/evaluate` et `/chat/compare` (désactivés par défaut en AT05).
@@ -20,7 +20,7 @@ Après 5 ateliers à construire, l'élève a un agent fonctionnel. Mais devant u
 
 POURQUOI un seul fichier à blanker pour AT06 ?
 
-Le scope AT06 = **évaluation comparative + grille décision**. Tout le reste est déjà fait (AT01-05). Le seul fichier porteur du concept central = `evaluate_pipeline.py`. Le delta entre `atelier/05` et `atelier/06` côté API = 4 lignes (timeout retiré sur chat.py) — pas la peine de blanker des deltas anémiques. L'atelier vit dans `evaluate_pipeline.py` (~150 lignes, 6 TODOs documentés).
+Le scope AT06 = **évaluation comparative + grille décision**. Tout le reste est déjà fait (AT01-05). Le seul fichier porteur du concept central = `evaluate_pipeline.py`. Le delta entre `atelier/05` et `atelier/06` côté API = 4 lignes — pas la peine de blanker des deltas anémiques. L'atelier vit dans `evaluate_pipeline.py` (~150 lignes, 6 TODOs documentés).
 
 | Fichier | État | Pourquoi |
 |---------|------|----------|
@@ -38,44 +38,22 @@ Le scope AT06 = **évaluation comparative + grille décision**. Tout le reste es
 
 POURQUOI passer par l'API HTTP plutôt qu'importer les fonctions Python ?
 
-Tentation de l'élève : `from homebutler.rag.retriever import retrieve` puis appel direct. C'EST PIRE. En passant par HTTP, on évalue **la stack TELLE QU'ELLE TOURNERA EN PROD** : routing FastAPI, sérialisation, latence réseau locale, validation Pydantic, exceptions HTTP. C'est le mode « bout-en-bout » qui révèle les régressions que les imports directs masquent.
+Tentation : `from homebutler.rag.retriever import retrieve` puis appel direct. C'EST PIRE. En passant par HTTP, on évalue **la stack TELLE QU'ELLE TOURNERA EN PROD** : routing FastAPI, sérialisation, latence réseau locale, validation Pydantic, exceptions HTTP. C'est le mode « bout-en-bout » qui révèle les régressions que les imports directs masquent.
 
-**Évolution à apporter** (TODO 2) :
+**Signature à compléter (TODO 2)** :
 
 ```python
-# AVANT : NotImplementedError
-# APRÈS :
-
 def evaluate_strategies(sample_size: int = 20) -> dict:
-    print("\n═══ TODO 2 — POST /rag/evaluate pour 3 stratégies ═══")
-    out = {}
-    for strategy in ("fixed", "recursive", "ensemble"):
-        # AVANTAGE : on MESURE la latence ICI, côté client — c'est ce qui
-        # compte pour l'expérience utilisateur. Mesurer côté serveur biaise
-        # (oublie le coût de sérialisation + transport).
-        t0 = time.time()
-
-        r = requests.post(
-            f"{API}/rag/evaluate",
-            json={"strategy": strategy, "sample_size": sample_size},
-        )
-        elapsed = time.time() - t0
-
-        if r.status_code != 200:
-            # On NE crashe pas tout le script pour une stratégie qui rate
-            # (ex: index manquant pour 'ensemble'). On loggue et on continue.
-            print(f"  {strategy}: HTTP {r.status_code}")
-            continue
-
-        data = r.json()
-        out[strategy] = data
-        # Format aligné avec les colonnes du tableau récap (Slide 5).
-        # f"{x:.2f}" → 2 décimales suffisent pour des recalls (0.00–1.00).
-        print(f"  {strategy:10s}  Recall@1={data['recall_at_1']:.2f}  "
-              f"Recall@3={data['recall_at_3']:.2f}  Recall@5={data['recall_at_5']:.2f}  "
-              f"({elapsed:.1f}s)")
-    return out
+    """Boucle sur 3 stratégies de chunking (fixed/recursive/ensemble),
+    appelle POST /rag/evaluate pour chacune, mesure la latence côté client,
+    retourne un dict {strategy: response_json}.
+    """
+    raise NotImplementedError("TODO 2 — voir indices ci-dessous")
 ```
+
+**Indice léger** — Boucle `for strategy in ("fixed", "recursive", "ensemble"):`. Pour chacune : (1) prends un timestamp avant l'appel, (2) `requests.post(f"{API}/rag/evaluate", json={"strategy": ..., "sample_size": ...})`, (3) calcule l'elapsed, (4) si HTTP 200, stocke `r.json()` dans `out[strategy]` et affiche un récap, sinon log et continue.
+
+**Indice fort** — Pour la latence : `t0 = time.time()` avant le POST, `elapsed = time.time() - t0` après. ⚠️ Ne crashe pas tout le script si une stratégie rate (ex: index manquant) — `if r.status_code != 200: print(f"  {strategy}: HTTP {r.status_code}"); continue`. Format d'affichage : `print(f"  {strategy:10s}  Recall@1={data['recall_at_1']:.2f}  Recall@3={data['recall_at_3']:.2f}  Recall@5={data['recall_at_5']:.2f}  ({elapsed:.1f}s)")`.
 
 | Stratégie | Recall@5 typique (HomeButler) | Cas d'usage |
 |-----------|-------------------------------|-------------|
@@ -92,45 +70,20 @@ POURQUOI mesurer la latence DE CHAQUE appel (pas une moyenne globale) ?
 
 Une moyenne globale cache la **variance**. Un mode peut être rapide en moyenne mais avec un p99 (99e percentile) catastrophique — c'est ce qui bloque en prod. Garder le détail par appel permet de calculer mean + median + p95 + p99.
 
-**Évolution à apporter** (TODO 3) :
+**Signature à compléter (TODO 3)** :
 
 ```python
-# AVANT : NotImplementedError
-# APRÈS :
-
 def compare_modes(questions: list[str]) -> dict:
-    print("\n═══ TODO 3 — Comparaison 3 modes (llm_only / rag_only / agent) ═══")
-    results = {"llm_only": [], "rag_only": [], "agent": []}
-    latencies = {"llm_only": [], "rag_only": [], "agent": []}
-
-    # DOUBLE BOUCLE intentionnelle :
-    #   outer = questions (5 questions étalons)
-    #   inner = modes (3 modes par question)
-    # AVANTAGE : on évalue CHAQUE question dans CHAQUE mode → on peut afficher
-    # un tableau "question x mode" pour le rapport (vu le formateur).
-    for q in questions:
-        for mode in ("llm_only", "rag_only", "agent"):
-            t0 = time.time()
-            r = requests.post(
-                f"{API}/chat",
-                json={"message": q, "mode": mode},
-                timeout=60,
-                #  ↑ 60 s = larges marges. L'agent ReAct peut prendre 30 s
-                #    avec 5-8 itérations + appels LLM. llm_only ≈ 2 s.
-            )
-            elapsed = time.time() - t0
-            latencies[mode].append(elapsed)
-
-            if r.status_code == 200:
-                results[mode].append(r.json().get("response", ""))
-                print(f"  [{mode:10s}] {q[:50]:50s}  → {elapsed:.1f}s")
-            else:
-                # On enregistre l'échec mais on ne crashe pas — utile pour
-                # voir si un mode est instable (rate limit, timeout, etc.).
-                results[mode].append(f"HTTP {r.status_code}")
-
-    return {"answers": results, "latencies": latencies}
+    """Double boucle : questions × modes. Pour chaque (question, mode),
+    POST /chat avec le bon mode, mesure la latence, stocke la réponse.
+    Retourne {"answers": {mode: [responses]}, "latencies": {mode: [seconds]}}.
+    """
+    raise NotImplementedError("TODO 3 — voir indices ci-dessous")
 ```
+
+**Indice léger** — Initialise deux dicts : `results = {"llm_only": [], "rag_only": [], "agent": []}` et `latencies = {"llm_only": [], "rag_only": [], "agent": []}`. Double boucle : outer sur `questions`, inner sur les 3 modes. Pour chaque combo, fais un `requests.post(f"{API}/chat", json={"message": q, "mode": mode}, timeout=60)`.
+
+**Indice fort** — `timeout=60` est large mais nécessaire : l'agent ReAct peut prendre 30 s avec 5-8 itérations + appels LLM. llm_only ≈ 2 s. ⚠️ Si HTTP != 200, enregistre quand même `f"HTTP {r.status_code}"` dans `results[mode]` (et la latence) — utile pour voir si un mode est instable (rate limit, timeout). Sinon `results[mode].append(r.json().get("response", ""))`.
 
 | Mode      | Latence moyenne (s) | Tokens / réponse | Faithfulness |
 |-----------|--------------------|--------------------|-------------|
@@ -143,34 +96,23 @@ def compare_modes(questions: list[str]) -> dict:
 
 POURQUOI produire du Markdown affiché en console ?
 
-L'élève peut copier-coller la sortie console DIRECTEMENT dans son rapport Markdown (PR description, notion, slack). Pas besoin d'écrire un parser séparé. Et l'alignement par `f"{x:<12}"` donne un tableau lisible même en monospace.
+Tu peux copier-coller la sortie console DIRECTEMENT dans ton rapport Markdown (PR description, Notion, Slack). Pas besoin d'écrire un parser séparé. Et l'alignement par `f"{x:<12}"` donne un tableau lisible même en monospace.
 
-**Évolution à apporter** (TODO 5) :
+**Signature à compléter (TODO 5)** :
 
 ```python
-# AVANT : NotImplementedError
-# APRÈS :
-
 def show_summary(strategies_eval: dict, latencies: dict) -> None:
-    print("\n═══ TODO 5 — Tableau récapitulatif ═══")
-
-    # AVANTAGE : les f-strings avec alignement ({x:<12} = padding gauche 12 chars)
-    # produisent du texte qui RESSEMBLE à un tableau Markdown — collable direct.
-    print(f"{'Stratégie':<12} {'R@1':>6} {'R@3':>6} {'R@5':>6}")
-    for strategy, data in strategies_eval.items():
-        print(f"{strategy:<12} {data['recall_at_1']:>6.2f} "
-              f"{data['recall_at_3']:>6.2f} {data['recall_at_5']:>6.2f}")
-
-    # On affiche les benchmarks de l'article RAFT (Zhang et al. 2024, arxiv:2403.10131)
-    # comme RÉFÉRENCE. Si nos chiffres sont LOIN de ces benchmarks, c'est un signal.
-    print("\nÀ COMPARER aux benchmarks Slide 7 Chapitre 6 (RAFT Zhang et al. 2024) :")
-    print("  RAG ensemble    : Recall@5 attendu ~ 0.87")
-    print("  RAG fixed-size  : Recall@5 attendu ~ 0.72")
-    print("  LLM seul        : Recall@5 ≈ 0.15 (pas de retrieval, invente)")
-    print("  Hybride (RAFT)  : 94 % QA factuel, 95 % style, 96 % médical")
+    """Affiche un tableau aligné des Recall@k pour 3 stratégies + une section
+    'à comparer aux benchmarks RAFT 2024' avec les chiffres de référence.
+    """
+    raise NotImplementedError("TODO 5 — voir indices ci-dessous")
 ```
 
-**Sortie attendue** (à copier dans le rapport) :
+**Indice léger** — Une seule technique : f-strings avec alignement. `f"{x:<12}"` = padding à gauche sur 12 caractères, `f"{x:>6.2f}"` = alignement droite sur 6 caractères avec 2 décimales. Avec ces deux outils, tu produis un tableau aligné qui ressemble visuellement à du Markdown.
+
+**Indice fort** — Header : `print(f"{'Stratégie':<12} {'R@1':>6} {'R@3':>6} {'R@5':>6}")`. Pour chaque stratégie dans `strategies_eval` : `print(f"{strategy:<12} {data['recall_at_1']:>6.2f} {data['recall_at_3']:>6.2f} {data['recall_at_5']:>6.2f}")`. Termine par les benchmarks RAFT 2024 hardcodés : RAG ensemble ~0.87, RAG fixed-size ~0.72, LLM seul ~0.15, Hybride (RAFT) 94 % QA factuel.
+
+**Sortie attendue** (à copier dans ton rapport) :
 ```
 Stratégie       R@1    R@3    R@5
 fixed          0.55   0.68   0.72
@@ -178,7 +120,7 @@ recursive      0.65   0.80   0.85
 ensemble       0.72   0.85   0.87
 
 À COMPARER aux benchmarks RAFT 2024 :
-  RAG ensemble    : Recall@5 attendu ~ 0.87  ← on EST À LA CIBLE ✓
+  RAG ensemble    : Recall@5 attendu ~ 0.87  ← tu ES À LA CIBLE ✓
   RAG fixed-size  : Recall@5 attendu ~ 0.72  ← OK
   ...
 ```
@@ -225,7 +167,7 @@ Les chiffres mesurés ne disent PAS « il faut RAG vs FT vs Hybride pour le cas 
   - Latence : 5-10 s acceptable (analyse pas temps réel).
 ```
 
-> 💡 **Critère formateur** : la grille doit citer des CHIFFRES mesurés par l'élève (pas juste des opinions). « 3 s » ≠ « rapide ».
+> 💡 **Critère de qualité** : ta grille doit citer des CHIFFRES mesurés par toi (pas juste des opinions). « 3 s » ≠ « rapide ».
 
 
 📝 Slide 7 : Récap — démarrer sur la branche `student/06-finetune-vs-rag`
@@ -271,4 +213,4 @@ git diff student/06-finetune-vs-rag atelier/06-finetune-vs-rag \
 
 ⚠️ **Si tu obtiens `HTTP 404` sur `/rag/evaluate`** — vérifier que `ENABLE_COMPARE_ROUTES=true` est bien dans le `.env` LU par uvicorn (relancer uvicorn après modif). Le `404` est intentionnel sinon — c'est ce qui empêche l'élève AT05 de tricher.
 
-> 💡 **Livrable final formation** : `evaluate_pipeline.py` exécuté + `grille_decision.md` complété + slides de présentation au comité. Tu sors avec un argumentaire CHIFFRÉ pour défendre une architecture RAG/FT/Hybride sur n'importe quel cas d'usage.
+> 💡 **Livrable final formation** : `evaluate_pipeline.py` exécuté + `grille_decision.md` complété + slides de présentation. Tu sors avec un argumentaire CHIFFRÉ pour défendre une architecture RAG/FT/Hybride sur n'importe quel cas d'usage.
