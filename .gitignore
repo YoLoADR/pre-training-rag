@@ -49,3 +49,7 @@ mlartifacts/
 .pytest_cache/
 htmlcov/
 .coverage
+
+# Notes formateur en cours (jamais commit — repo formateur, restent locales)
+notes-formateur-vulgarisation.md
+draft.md

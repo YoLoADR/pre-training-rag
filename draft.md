@@ -1,3 +1,18 @@
+
+(!) Les élèves sont perdu car il y a des notes détiné au formateur (moi) dans leur projet, cela rend le projet brouillon (!) C'est pas clairement établie ce qu'on doit donnée à chaque atelier, (?) tp ? exerice ? tp blank ? tp corriger. Sachant que la partie blank et la partie corriger doivent rester discocier (à ne pas mixer). Ma méthodologie je leur montre les slides (deja réaliser pas besoin de les faire) puis je leur montre (présente) le tp corriger afin de leur présenter les concepts qui vont devoir implémenter pour les forcer à retenir, puis cache les tp corriger et leur donne les tp blank
+(!) Attention on doit garder le versionning progressif
+(!) On doit respecter le scope de chaque atelier sans déborder 
+(?) Architecture par claire et complexe au lieu de simple 
+(!) IMPORTANT : Tout les projets et exercices sont fonctionnel sans erreur et one des logiques éprouvés. Je n'accepte aucune regression
+
+Voici ce que j'avais fais /Users/yohannravino/Factory/pre-training-rag/.agent/tasks/ateliers-formation-raft mais je ne savais pas que le être bordélique
+/Users/yohannravino/Factory/pre-training-rag/.agent/tasks/branches-student-blanks-raft
+/Users/yohannravino/Factory/pre-training-rag/.agent/tasks/guides-eleves-ateliers-rag
+
+Trouve moi une réorgainsation simplifier et claire sans baisser en qualité et en respectant ma pedagogie (slide -> ce qu'il devront réaliser -> blank tp -> partage correction)
+Comme ils sont pour certain en vibe coding j'avais fais des exercices supplémentaire, mais je ne sais pas où ils sont car trop de choses sont éparpiller
+---
+
 (?) Fontionnalité gmail : reformulation de message basé sur le contexte
 (?) OpenClaw pour répondre à tes messages whatsapp
 
