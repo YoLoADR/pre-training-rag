@@ -82,3 +82,10 @@
 - Quota Free=1 service/souscription → service Basic PARTAGÉ + 1 index/élève (AZURE_SEARCH_INDEX=trigramme).
 - Run end-to-end nécessite service Azure réel (formateur). Sans Azure : imports/schéma/bugs vérifiés OK ; solution.py sort proprement sur "Service Azure non configuré".
 - Commits : atelier/09=0540707, student/09 commité. Diff = vectorstore_azure.py uniquement.
+
+## CHANTIER TERMINÉ (2026-06-30)
+- 6 branches push sur github : atelier/07-09 (corrigés) + student/07-09 (blankés).
+- Non-régression PROUVÉE : SHA student/01-06 + atelier/01-06 == backup initial (intacts). config.py +4 lignes (AT09 only, additif).
+- 9/9 bugs verts (AT07/08/09 × 3). Tests déterministes sans clé LLM / sans Azure.
+- Backup distant : tags backup/20260630-1506/* (12 branches) + repos training-rag & pre-training-rag push.
+- Limite assumée : run NUMÉRIQUE RAGAS (AT07) + ingest/query Azure (AT09) nécessitent clé LLM / compte Azure → côté formateur. Tout le reste vérifié structurellement.
