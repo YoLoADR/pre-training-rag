@@ -71,3 +71,14 @@
 - Run NUMÉRIQUE RAGAS nécessite clé LLM (formateur). Sans clé : imports/dataset/handler/bugs vérifiés OK ; le run s'arrête à get_llm (attendu).
 - Commits : atelier/07=17e34f5, student/07=9171e81. Diff = evaluate_observability.py uniquement.
 - Résidu à nettoyer entre branches : __pycache__ d'ateliers d'autres branches fait échouer verify_branch_scope (transversal). Toujours `find ateliers -name __pycache__ -exec rm -rf` avant verify/commit.
+
+## AT09 — TERMINÉ (atelier/09 + student/09)
+- Concept central : control plane (CLI az search = service) vs data plane (SDK = index/ingest/query).
+- vectorstore_azure.py : build_index_schema (schéma manuel, dim 384, content searchable, HNSW, champs alignés LangChain id/content/content_vector/metadata), get_azure_store (AzureSearch fastembed, hybrid), azure_search, + create_index/ingest_documents/get_search_index_client (fournis).
+- azure-search-documents>=11.5.1, azure-identity>=1.16. AzureSearch import: from langchain_community.vectorstores.azuresearch import AzureSearch.
+- Bugs HORS-LIGNE (testables sans Azure) : v1 dim 1536≠384 [construit schéma, vérifie dims==384], v2 default similarity vs hybrid [statique], v3 content searchable=False [construit schéma, vérifie searchable]. Cycle FAIL→PASS validé.
+- config.py + .env.example : AZURE_SEARCH_ENDPOINT/KEY/INDEX additif (vides par défaut) → git diff vs atelier/06 = +4 lignes seulement.
+- Scripts CLI : azure_provision.sh (az login + az search service create + écrit .env), azure_teardown.sh (az group delete). CLI-VS-PORTAIL.md = table data 2026.
+- Quota Free=1 service/souscription → service Basic PARTAGÉ + 1 index/élève (AZURE_SEARCH_INDEX=trigramme).
+- Run end-to-end nécessite service Azure réel (formateur). Sans Azure : imports/schéma/bugs vérifiés OK ; solution.py sort proprement sur "Service Azure non configuré".
+- Commits : atelier/09=0540707, student/09 commité. Diff = vectorstore_azure.py uniquement.

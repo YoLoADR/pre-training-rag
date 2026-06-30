@@ -41,19 +41,19 @@
 - [x] Vérif + check_atelier_ready case 07
 
 ## Phase 3 — AT09 Azure AI Search (priorité)
-- [ ] Brancher `atelier/09-azure-search` depuis `atelier/06`
-- [ ] `homebutler/rag/vectorstore_azure.py` (build_azure_index schéma manuel 384d, get_azure_store, azure_search)
-- [ ] config.py + .env.example : AZURE_SEARCH_* (additif AT09 uniquement)
-- [ ] Scripts fournis : azure_provision.sh, azure_teardown.sh, CLI-VS-PORTAIL.md
-- [ ] solution.py + exercice.py (ingest + 3 modes + comparaison FAISS)
-- [ ] `requirements_atelier09.txt` (`-r requirements_atelier05.txt` + azure-search-documents + azure-identity)
-- [ ] Bugs v1 (dim 1536≠384) / v2 (similarity vs hybrid) / v3 (searchable=True manquant) + explanations
-- [ ] checkpoints
-- [ ] GUIDE-ELEVE + GUIDE-FORMATEUR + README-formateur + table CLI/portail
-- [ ] .claude/CLAUDE.md + settings.json + .cursorrules
-- [ ] Slides corrige/blank
-- [ ] Brancher `student/09-azure-search` : blanker vectorstore_azure.py + exercice.py
-- [ ] Vérif (run conditionnel compte Azure) + check_atelier_ready case 09
+- [x] Brancher `atelier/09-azure-search` depuis `atelier/06`
+- [x] `homebutler/rag/vectorstore_azure.py` (build_azure_index schéma manuel 384d, get_azure_store, azure_search)
+- [x] config.py + .env.example : AZURE_SEARCH_* (additif AT09 uniquement)
+- [x] Scripts fournis : azure_provision.sh, azure_teardown.sh, CLI-VS-PORTAIL.md
+- [x] solution.py + exercice.py (ingest + 3 modes + comparaison FAISS)
+- [x] `requirements_atelier09.txt` (`-r requirements_atelier05.txt` + azure-search-documents + azure-identity)
+- [x] Bugs v1 (dim 1536≠384) / v2 (similarity vs hybrid) / v3 (searchable=True manquant) + explanations
+- [x] checkpoints
+- [x] GUIDE-ELEVE + GUIDE-FORMATEUR + README-formateur + table CLI/portail
+- [x] .claude/CLAUDE.md + settings.json + .cursorrules
+- [x] Slides corrige/blank
+- [x] Brancher `student/09-azure-search` : blanker vectorstore_azure.py + exercice.py
+- [x] Vérif (run conditionnel compte Azure) + check_atelier_ready case 09
 
 ## Phase 4 — Doc formateur (pre-training-rag)
 - [ ] DEROULE-FORMATION.md : section Jour 4 / parcours avancé + déroulé minuté AT07/08/09 + pannes
