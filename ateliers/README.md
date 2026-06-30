@@ -80,6 +80,14 @@ Certains ateliers ont des fichiers supplémentaires :
 | `atelier/04-finetuning`          | J2 a.-m.   | Fine-tuning HuggingFace            | LoRA/QLoRA Colab, dataset Alpaca, 5 pièges FT, évaluation PPL+F1     |
 | `atelier/05-deploiement`         | J3 matin   | Déploiement + supervision          | FastAPI + Streamlit + Langfuse + Ollama, sécurité                    |
 | `atelier/06-finetune-vs-rag`     | J3 a.-m.   | Fine-tuning vs RAG                 | Recall@k 3 modes, RAFT, benchmarks, grille de décision               |
+| `atelier/07-observabilite`       | J4* matin  | Évaluation & observabilité (avancé)| Langfuse (tracing+score) + RAGAS + LLM-judge ; reference=output      |
+| `atelier/08-optimisation`        | J4* a.-m.  | Optimisation pipeline RAG (avancé) | reranking flashrank + multi-query ; Recall@1 40→70%, MRR +0.22       |
+| `atelier/09-azure-search`        | J4*+       | RAG avec Azure AI Search (avancé)  | control plane CLI vs data plane SDK ; index 384d ; hybrid search     |
+
+> **\* Parcours avancé optionnel (« industrialisation »)** — AT07/08/09 sont des modules
+> DÉTACHABLES (mesurer → améliorer → industrialiser), jouables en Jour 4 ou à la carte. Ils
+> dépassent le volume officiel de la fiche (14 h) : ce ne sont pas un comblement du programme
+> Qualiopi mais un approfondissement. AT09 nécessite un compte Azure ; AT07/AT08 sont 100% locaux.
 
 ## Vérifier le scope d'une branche
 

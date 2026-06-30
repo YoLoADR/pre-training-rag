@@ -56,9 +56,9 @@
 - [x] Vérif (run conditionnel compte Azure) + check_atelier_ready case 09
 
 ## Phase 4 — Doc formateur (pre-training-rag)
-- [ ] DEROULE-FORMATION.md : section Jour 4 / parcours avancé + déroulé minuté AT07/08/09 + pannes
-- [ ] INDEX-EXTRAS-VIBE.md : ## AT07/08/09 (2 défis chiffrés chacun)
-- [ ] ateliers/README.md : mapping étendu (modules avancés optionnels)
+- [x] DEROULE-FORMATION.md : section Jour 4 / parcours avancé + déroulé minuté AT07/08/09 + pannes
+- [x] INDEX-EXTRAS-VIBE.md : ## AT07/08/09 (2 défis chiffrés chacun)
+- [x] ateliers/README.md : mapping étendu (modules avancés optionnels)
 
 ## Phase 5 — Non-régression & push
 - [ ] SHA student/01-06 inchangés ; git diff config.py additif only

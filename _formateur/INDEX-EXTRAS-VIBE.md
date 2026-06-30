@@ -87,6 +87,27 @@
 
 ---
 
+## AT07 — Observabilité & Évaluation (parcours avancé, optionnel)
+| # | Défi | Fichier de référence | Objectif mesurable |
+|---|------|----------------------|--------------------|
+| 1 | RAGAS sur 20 questions + dérive | `ateliers/atelier-07-observabilite/evaluate_observability.py` (N_EVAL=20, Ollama) | comparer faithfulness 6 Q vs 20 Q, stabilité < 0.05 |
+| 2 | Self-host Langfuse + PII scrubbing | `docker-compose.langfuse.yml` + fonction de masquage | 0 PII (email/adresse) visible dans les traces |
+**Fichier extra** : `homebutler/eval/` (tracing/ragas_eval/judge — fourni, à lire)
+
+## AT08 — Optimisation du pipeline RAG (parcours avancé, optionnel)
+| # | Défi | Fichier de référence | Objectif mesurable |
+|---|------|----------------------|--------------------|
+| 1 | Tuning base_k/top_n (coût vs précision) | `ateliers/atelier-08-optimisation/solution.py` | tracer Recall@1/MRR/latence pour base_k ∈ {10,20,40,80} |
+| 2 | Chaîner multi-query → reranking | `homebutler/rag/reranking.py` | gain Recall@1 vs reranking seul sur questions naturelles |
+**Fichier extra** : `homebutler/rag/reranking.py` (get_hyde_chain — bonus HyDE)
+
+## AT09 — Azure AI Search (parcours avancé, optionnel)
+| # | Défi | Fichier de référence | Objectif mesurable |
+|---|------|----------------------|--------------------|
+| 1 | semantic_hybrid (semantic ranker) | `homebutler/rag/vectorstore_azure.py` + semantic config | comparer hybrid vs semantic_hybrid (tier Basic+) |
+| 2 | Grille de décision FAISS vs Azure | `ateliers/atelier-09-azure-search/CLI-VS-PORTAIL.md` | grille 6 critères (coût/latence/scalabilité/ops/souveraineté/lock-in) |
+**Fichier extra** : `azure_provision.sh` / `azure_teardown.sh` (control plane CLI)
+
 ## Tableau récap couverture pédagogique des bonus
 
 | Compétence visée | Atelier(s) couvrant |
@@ -101,3 +122,6 @@
 | API production-ready | AT05.1 |
 | Conformité RGPD | AT05.2 |
 | Synthèse pédagogique | AT06.1, AT06.2 |
+| Observabilité & éval continue (Langfuse/RAGAS) | AT07.1, AT07.2 |
+| Optimisation retrieval (reranking/multi-query) | AT08.1, AT08.2 |
+| Vector store managé cloud (Azure) | AT09.1, AT09.2 |
