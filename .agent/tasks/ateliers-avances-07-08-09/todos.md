@@ -26,19 +26,19 @@
 - [x] `check_atelier_ready.sh` (regex ^0[1-9]$ + case 08) + verify_branch_scope.sh
 
 ## Phase 2 — AT07 Observabilité & Évaluation
-- [ ] Brancher `atelier/07-observabilite` depuis `atelier/06`
-- [ ] Sous-module `homebutler/eval/` : __init__, tracing.py, ragas_eval.py, judge.py (fourni corrigé)
-- [ ] `ateliers/atelier-07-observabilite/evaluate_observability.py` (TODO inline style AT06)
-- [ ] docker-compose.langfuse.yml (bonus self-host)
-- [ ] **RUN réel → figer seuils** (faithfulness, etc.) + valider data/qa_dataset a des `reference`
-- [ ] `requirements_atelier07.txt` (`-r requirements_atelier06.txt` + ragas==0.2.* + datasets)
-- [ ] Bugs v1/v2/v3 (tests style analyse statique) + explanations
-- [ ] checkpoints check_1 (QCM) + check_final (mots-clés)
-- [ ] GUIDE-ELEVE + GUIDE-FORMATEUR + README-formateur
-- [ ] .claude/CLAUDE.md + settings.json + .cursorrules
-- [ ] Slides corrige/blank
-- [ ] Brancher `student/07-observabilite` : blanker les TODO de evaluate_observability.py
-- [ ] Vérif + check_atelier_ready case 07
+- [x] Brancher `atelier/07-observabilite` depuis `atelier/06`
+- [x] Sous-module `homebutler/eval/` : __init__, tracing.py, ragas_eval.py, judge.py (fourni corrigé)
+- [x] `ateliers/atelier-07-observabilite/evaluate_observability.py` (TODO inline style AT06)
+- [x] docker-compose.langfuse.yml (bonus self-host)
+- [x] **RUN réel → figer seuils** (faithfulness, etc.) + valider data/qa_dataset a des `reference`
+- [x] `requirements_atelier07.txt` (`-r requirements_atelier06.txt` + ragas==0.2.* + datasets)
+- [x] Bugs v1/v2/v3 (tests style analyse statique) + explanations
+- [x] checkpoints check_1 (QCM) + check_final (mots-clés)
+- [x] GUIDE-ELEVE + GUIDE-FORMATEUR + README-formateur
+- [x] .claude/CLAUDE.md + settings.json + .cursorrules
+- [x] Slides corrige/blank
+- [x] Brancher `student/07-observabilite` : blanker les TODO de evaluate_observability.py
+- [x] Vérif + check_atelier_ready case 07
 
 ## Phase 3 — AT09 Azure AI Search (priorité)
 - [ ] Brancher `atelier/09-azure-search` depuis `atelier/06`

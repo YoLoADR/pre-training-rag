@@ -58,3 +58,16 @@
 - Commits : atelier/08 = c423d29 (+ scope), student/08 = 6e117b0 (+ scope). Diff atelier↔student
   = uniquement reranking.py (blank). verify_branch_scope conforme sur les 2.
 - check_atelier_ready : regex ^0[1-9]$ + cases 07/08/09. preload_models : flashrank (try/except).
+
+## AT07 — TERMINÉ (atelier/07 + student/07)
+- Type éval/synthèse (comme AT06) : pas d'exercice/solution ; TODO inline dans evaluate_observability.py.
+- homebutler/eval/ FOURNI corrigé (tracing/ragas_eval/judge). Bugs ciblent eval/ → applicables sur student aussi.
+- RAGAS 0.2.15 : from ragas import evaluate, EvaluationDataset, SingleTurnSample ; champs user_input/response/retrieved_contexts/reference. Wrappers ragas.llms.LangchainLLMWrapper, ragas.embeddings.LangchainEmbeddingsWrapper.
+- Langfuse v2 (2.57.1) : from langfuse.callback import CallbackHandler ; handler.get_trace_id() ; Langfuse().score(trace_id,name,value)/.flush(). Vérifié : handler + client s'instancient avec clés factices (get_trace_id/score/flush présents).
+- reference = champ `output` du dataset Alpaca (input→user_input, output→reference). T1 résolu.
+- Bugs (tests DÉTERMINISTES sans LLM/Langfuse live) : v1=import langfuse.langchain(v3) [statique], v2=build_eval_dataset omet reference [comportemental dataset], v3=judge temperature=1.0 [statique]. Cycle FAIL→PASS validé.
+- PIÈGE rencontré : commentaire contenant littéralement "langfuse.langchain" faisait échouer test_v1 sur le corrigé → reformulé en "API v3".
+- Langfuse Cloud par défaut ; docker-compose.langfuse.yml = self-host v2 (2 conteneurs, bonus). N_EVAL=6 (garde-fou rate-limit).
+- Run NUMÉRIQUE RAGAS nécessite clé LLM (formateur). Sans clé : imports/dataset/handler/bugs vérifiés OK ; le run s'arrête à get_llm (attendu).
+- Commits : atelier/07=17e34f5, student/07=9171e81. Diff = evaluate_observability.py uniquement.
+- Résidu à nettoyer entre branches : __pycache__ d'ateliers d'autres branches fait échouer verify_branch_scope (transversal). Toujours `find ateliers -name __pycache__ -exec rm -rf` avant verify/commit.
