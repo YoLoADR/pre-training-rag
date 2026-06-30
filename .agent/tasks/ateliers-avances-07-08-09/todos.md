@@ -61,8 +61,8 @@
 - [x] ateliers/README.md : mapping étendu (modules avancés optionnels)
 
 ## Phase 5 — Non-régression & push
-- [ ] SHA student/01-06 inchangés ; git diff config.py additif only
-- [ ] pytest ateliers/atelier-0{1..6}-*/bugs/ verts
-- [ ] imports homebutler OK sur 01-06
-- [ ] Push branches atelier/07-09 + student/07-09 sur remote github
-- [ ] Mettre à jour insights.md + memory
+- [x] SHA student/01-06 inchangés ; git diff config.py additif only
+- [x] pytest ateliers/atelier-0{1..6}-*/bugs/ verts
+- [x] imports homebutler OK sur 01-06
+- [x] Push branches atelier/07-09 + student/07-09 sur remote github
+- [x] Mettre à jour insights.md + memory
