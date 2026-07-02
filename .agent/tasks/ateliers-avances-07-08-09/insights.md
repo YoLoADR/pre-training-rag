@@ -77,7 +77,7 @@
 - vectorstore_azure.py : build_index_schema (schéma manuel, dim 384, content searchable, HNSW, champs alignés LangChain id/content/content_vector/metadata), get_azure_store (AzureSearch fastembed, hybrid), azure_search, + create_index/ingest_documents/get_search_index_client (fournis).
 - azure-search-documents>=11.5.1, azure-identity>=1.16. AzureSearch import: from langchain_community.vectorstores.azuresearch import AzureSearch.
 - Bugs HORS-LIGNE (testables sans Azure) : v1 dim 1536≠384 [construit schéma, vérifie dims==384], v2 default similarity vs hybrid [statique], v3 content searchable=False [construit schéma, vérifie searchable]. Cycle FAIL→PASS validé.
-- config.py + .env.example : AZURE_SEARCH_ENDPOINT/KEY/INDEX additif (vides par défaut) → git diff vs atelier/06 = +4 lignes seulement.
+- config.py + .env.example : AZURE_SEARCH_ENDPOINT/KEY/INDEX additif (vides par défaut) → git diff vs atelier/06 = +6 lignes seulement (3 vars + en-tête commentaire + ligne vide).
 - Scripts CLI : azure_provision.sh (az login + az search service create + écrit .env), azure_teardown.sh (az group delete). CLI-VS-PORTAIL.md = table data 2026.
 - Quota Free=1 service/souscription → service Basic PARTAGÉ + 1 index/élève (AZURE_SEARCH_INDEX=trigramme).
 - Run end-to-end nécessite service Azure réel (formateur). Sans Azure : imports/schéma/bugs vérifiés OK ; solution.py sort proprement sur "Service Azure non configuré".
@@ -85,7 +85,7 @@
 
 ## CHANTIER TERMINÉ (2026-06-30)
 - 6 branches push sur github : atelier/07-09 (corrigés) + student/07-09 (blankés).
-- Non-régression PROUVÉE : SHA student/01-06 + atelier/01-06 == backup initial (intacts). config.py +4 lignes (AT09 only, additif).
+- Non-régression PROUVÉE : SHA student/01-06 + atelier/01-06 == backup initial (intacts). config.py +6 lignes (AT09 only, additif).
 - 9/9 bugs verts (AT07/08/09 × 3). Tests déterministes sans clé LLM / sans Azure.
 - Backup distant : tags backup/20260630-1506/* (12 branches) + repos training-rag & pre-training-rag push.
 - Limite assumée : run NUMÉRIQUE RAGAS (AT07) + ingest/query Azure (AT09) nécessitent clé LLM / compte Azure → côté formateur. Tout le reste vérifié structurellement.

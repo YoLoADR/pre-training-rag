@@ -37,7 +37,8 @@ rag_chain.invoke(q, config={"callbacks": [...]})   # ← passe le handler
 flush_traces(handler)                              # envoi async → flush en fin
 ```
 
-> 💡 **Indice** : le handler vient de `homebutler/eval/tracing.py` (fourni). SDK v2 = `from langfuse.callback import CallbackHandler`.
+> 💡 **Indice léger** : le handler vient de `homebutler/eval/tracing.py` (fourni). SDK v2.
+> 💡 **Indice fort** : `handler = get_langfuse_handler()` ; passe-le à `rag_chain.invoke(q, config={"callbacks":[handler]})` ; `flush_traces(handler)` en fin (envoi async).
 
 
 📝 Slide 4 : Concept #2 — RAGAS, les 4 métriques (et la référence)
@@ -53,7 +54,8 @@ POURQUOI certaines métriques exigent-elles une référence ?
 
 Schéma 0.2.x : `{user_input, response, retrieved_contexts, reference}`.
 
-> 💡 **Indice** : `reference` vient du champ `output` du dataset (input→user_input, output→reference).
+> 💡 **Indice léger** : `reference` vient du champ `output` du dataset (input→user_input, output→reference).
+> 💡 **Indice fort** : chaque échantillon = `{"user_input": q, "response": answer, "retrieved_contexts": contexts, "reference": ref}` ; sans `reference` → context_recall NaN.
 ⚠️ **Piège** — sans `reference`, context_recall/precision = **NaN** (Bug v2).
 
 
@@ -68,7 +70,8 @@ Un juge à température > 0 donne des scores variables → évaluation non repro
 score = llm_as_judge(q, answer, contexts)   # fourni dans homebutler/eval/judge.py
 ```
 
-> 💡 **Indice** : la température contrôle l'aléa, pas la compétence. Pour un juge, zéro aléa.
+> 💡 **Indice léger** : la température contrôle l'aléa, pas la compétence. Pour un juge, zéro aléa.
+> 💡 **Indice fort** : `score = llm_as_judge(q, answer, contexts)` (fourni, temperature=0) puis `score_trace(handler.get_trace_id(), "llm_judge", score)`.
 
 
 📝 Slide 6 : Concept #4 — Attacher le score à la trace (à câbler)
@@ -83,7 +86,8 @@ trace_id = handler.get_trace_id()
 score_trace(trace_id, name="llm_judge", value=score)
 ```
 
-> 💡 **Indice** : RAGAS injecte explicitement get_llm + fastembed — sinon il appelle OpenAI par défaut.
+> 💡 **Indice léger** : RAGAS injecte explicitement get_llm + fastembed — sinon il appelle OpenAI par défaut.
+> 💡 **Indice fort** : `dataset = build_eval_dataset(samples)` puis `metrics = run_ragas_eval(dataset)` (fonctions fournies dans homebutler/eval/).
 
 
 📝 Slide 7 : Garde-fous de production
